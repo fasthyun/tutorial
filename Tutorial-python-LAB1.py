@@ -13,8 +13,8 @@ from __future__ import print_function  # python3.0처럼 print()함수 동작 �
 # 6. dict 개념, 사용법
 
 # ipython에서 다음을 실행해 봅니다. 
-a=[2,3,4,5,7]   #이건 리스트입니다.
-len(a)  	  # len() 내장함수는 a의 현재 크기를 알려줍니다. ★★
+a=[2,3,4,5,7]  #이건 리스트입니다.
+len(a)  # len() 내장함수는 a의 현재 크기를 알려줍니다. ★★
 print("a=",a)    # a값을 출력해줍니다. 
 #문제: type(a) 결과는 뭘까요? ★★★★ 
 #답:
@@ -32,10 +32,11 @@ print("i=",i," f=",f)
 # ipython에서 다음을 실행해 봅니다.
 list(range(5))    # 이건 range()함수 입니다. 편하게 리스트를 만들어 줍니다. ★★★★
 
-range(10)
-range(2,10)  # 인자가 2개 , 결과는?
-range(3,10)
-range(0,10,2)  # 인자가 3개 , 결과는?
+
+list(range(10))
+list(range(2,10))  # 인자가 2개 , 결과는?
+list(range(3,10))
+list(range(0,10,2))  # 인자가 3개 , 결과는?
 
 b=range(5)
 #문제 : type(b) 결과는 ?  ★★★
