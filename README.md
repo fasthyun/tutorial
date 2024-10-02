@@ -2,6 +2,7 @@
 
  
  * 목적:
+ * 독립하기 
   - numpy ( gnuradio )
   - qt 
   - gnuradio block 
