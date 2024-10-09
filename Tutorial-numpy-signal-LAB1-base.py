@@ -41,7 +41,7 @@ y=np.sin(x)
 print("linspace ===> ",y)
 
 
-#생각1: linspace() 함수의 역할은? math와 numpy 중 어떤게 더 편리한가요?
+#생각1: linspace() 함수의 역할은? math.sin()와 numpy.sin() 중 어떤게 더 편리한가요?
 
 #문제1:  1주기 사인파 만들고  plot하기  (샘플 갯수는 200개, math.sin이용)
 #답:  감독관에게  꼭 확인  받기 !!
