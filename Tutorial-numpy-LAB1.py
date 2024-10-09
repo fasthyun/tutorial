@@ -71,7 +71,7 @@ np.min(nb)
 np.max(nb)
 np.ceil(nb)
 np.floor(nb)
-np .sin(nb)
+np.sin(nb)
 
 '''
 #실습 :   반복문 
