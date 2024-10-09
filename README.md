@@ -1,7 +1,7 @@
 # tutorial
 
  
- ## 목적:
+ # 목적
  * 독립하기
  * 재미있게 만들기
  * numpy ( gnuradio )
