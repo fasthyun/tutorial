@@ -1,0 +1,27 @@
+cmake3
+gcc-c++
+python-mako
+
+boost-devel 1.53
+
+fftw-devel
+
+swig3
+
+cppunit-devel
+
+qwt-devel (6.1)
+
+gsm-devl
+oxygen
+python2-sphinx
+SDL-devel
+zeromq-devel
+xmlto(?)
+libtool(?)
+graphviz (?)
+PyQt4-devel (?)
+---
+guile-devel (?)
+libusbx-devel
+numpy
