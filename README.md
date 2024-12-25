@@ -17,4 +17,4 @@
 * mc
 * shell command (basic) : rm , mkdir , grep ,
 * package manager : rpm , yum , dnf
-* 
+* test 
