@@ -1,7 +1,6 @@
 # tutorial
 
- 
- # 목적
+# 목적
  * 코드 작성 독립하기
  * 재미있게 만들기
  * numpy ( gnuradio )
@@ -10,11 +9,13 @@
  * 비동기 프로그래밍 vs 멀티쓰레딩 프로그래밍
  * 기타
  * 웹크롤링
- * 
-# 필요한 사전지식
+
+
+# 필수과정
 * Redhat7/8 install 
-* vi editor
+* vi editor ★★★
 * mc
 * shell command (basic) : rm , mkdir , grep ,
 * package manager : rpm , yum , dnf
-* test 
+* python-doc 도움말 사용하기 
+
