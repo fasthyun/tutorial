@@ -5,7 +5,7 @@
 
 # 목표: Qt 이벤트 처리 이해 ,  처리 설계 개념
 
-# - 주어진 data(int16)파일의  버스트 개수를 구하는 프로그램 
+# - 주어진 data(int16), sync pattern 개수를 구하는 프로그램 
 # - QProgressBar를 이용, 처리 진행율 표시!
 # - 버스트 개수를 구하기 힘들면 1보다 큰 개수를 구하라! 
 # - 쓰레드 사용 금지!
@@ -16,6 +16,7 @@ from PyQt5.QtCore import Qt, QRect
 
 app = None #for ipython 
 app = QApplication([]) #first of all Q*
+
 
 #1. QPushButton's parent?
 class MyWidget(QWidget): #class for painting
@@ -31,14 +32,14 @@ mw=MyWidget()
 def onRepaintClicked():
     pass
     
-def setupUI(window):    
+def setupUI(_widget):    
     buttonRepaint=QPushButton('시작')
     buttonRepaint.clicked.connect(onRepaintClicked) #only Qt's slot can be connected!!!        
     layout = QVBoxLayout()
     layout.addWidget(QLabel('Hello World!'))
     layout.addWidget(buttonRepaint)
     layout.addWidget(mw)
-    window.setLayout(layout)
+    _widget.setLayout(layout)
     return
     
 w = QWidget()
