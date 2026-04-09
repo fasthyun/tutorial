@@ -23,8 +23,14 @@ import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt 
 
+def plot_time(s,_title = None):
+    plt.plot(s,linewidth=0.5)
+    plt.xlabel('time [s]')
+    plt.title(_title)
+    plt.margins(x=0) # tight!
+    plt.show()
 
-def xplot(f,pxx,_title):
+def plot_power(f,pxx,_title):
     """      
      * for PowerSpectrum with semilog.
      * no time domain!
@@ -336,7 +342,7 @@ def make_exp1j(samp_rate,freq, duration=1):
      - 시계방향은 음의 주파수 , 반시계방향이 양의 주파수
     """    
     x = np.linspace(0, duration, int(samp_rate*duration),dtype=np.complex64)  # default: complex128
-    y = np.exp(1j*(x*2*np.pi*freq))  
+    y = np.exp(1j*(x * 2 * np.pi * freq ))  
     return y
 
         
@@ -420,7 +426,7 @@ def test_triangle_wave():
     samps=make_exp1j(8e3,2e3,1) # 8k,2k, 0.1 sec
     
     f,pxx = wvt_periodgram(samps,8e3)
-    xplot(f,pxx,"exp1j, 2kHz")
+    plot_power(f,pxx,"exp1j, 2kHz")
     plt.plot(samps[0:10].real)
     plt.show()    
     return 
@@ -437,7 +443,7 @@ def test_resample_with_fft():
     samps=make_tone(8e3,2e3,0.1) # 8k,2k, 0.1 sec
     #samps=add_noise(samps)
     f,pxx=wvt_periodgram(samps,8e3)
-    xplot(f,pxx,"exp1j, 2kHz")
+    plot_power(f,pxx,"exp1j, 2kHz")
     plt.plot(samps[0:10])
     plt.show()   
     pass
@@ -451,10 +457,10 @@ def test_hilbert():
     samp_rate=8e3
     samps=make_tone(samp_rate,2e3,1)
     f,pxx=wvt_periodgram(samps,samp_rate,1024,False) # 
-    xplot(f,pxx,"without hilbert()")
+    plot_power(f,pxx,"without hilbert()")
     hilbert_chunk   = signal.hilbert(samps)
     f,pxx=wvt_periodgram(hilbert_chunk,samp_rate,1024,False) # 
-    xplot(f,pxx,"with hilbert()")   
+    plot_power(f,pxx,"with hilbert()")   
     '''
     if (1295.5 <= result and result < 1296.5):
         continue
@@ -491,7 +497,7 @@ def test_fft_shifting():
     samps=np.fft.ifft(fft_samps)
     
     f,pxx=wvt_periodgram(samps,8e3)
-    xplot(f,pxx,"exp1j, 2kHz")
+    plot_power(f,pxx,"exp1j, 2kHz")
     ang=get_angle_wns(samps)            
     #print("angle=",ang)
     #plt.plot(ang)
@@ -515,12 +521,12 @@ def test_rotator():
     #samps=signal.resample(samps,len(samps)*2)
     f,pxx=wvt_periodgram(samps,samp_rate,1024,False)
     abs_pxx=np.abs(pxx)
-    xplot(f,abs_pxx,'before rotator ')
+    plot_power(f,abs_pxx,'before rotator ')
     #print(samps)
     samps=rotator(samps,-90) # 
     f,pxx=wvt_periodgram(samps,samp_rate,1024,False)
     abs_pxx=np.abs(pxx)
-    xplot(f,abs_pxx,'after rotator ')
+    plot_power(f,abs_pxx,'after rotator ')
     return
 
 import numpy
@@ -542,14 +548,14 @@ def test_cplx2real():
     if debug :
         f,pxx=wvt_periodgram(_samps ,samp_rate,1024,False)
         abs_pxx=np.abs(pxx)
-        xplot(f,abs_pxx,'original')
+        plot_power(f,abs_pxx,'original')
       
     _samps=signal.resample(_samps,len(_samps)*2) # upsample 2배 --> complex128
     
     if debug:
         f,pxx=wvt_periodgram(_samps,samp_rate*2,1024,False)
         abs_pxx=np.abs(pxx)
-        xplot(f,abs_pxx,'resampling x2 ')
+        plot_power(f,abs_pxx,'resampling x2 ')
         print("dtype=",_samps.dtype)    
         
     _samps=rotator(_samps, 90) # 90도 rotate ==> 중심주파수 이동 (0hz ==> 양의주파수 samp_rate/2),
@@ -557,7 +563,7 @@ def test_cplx2real():
     if debug :
         f,pxx=wvt_periodgram(_samps,samp_rate*2,1024,False)
         abs_pxx=np.abs(pxx)
-        xplot(f,abs_pxx,'after rotator')
+        plot_power(f,abs_pxx,'after rotator')
         print(" dtype=",_samps.dtype)
     
     
@@ -588,7 +594,7 @@ def test_fftfreq():
     if debug :
         f,pxx=wvt_periodgram(_samps ,samp_rate,1024,False)
         abs_pxx=np.abs(pxx)
-        xplot(f,abs_pxx,'original'+"(samprate= " +str(samp_rate) +"Hz)")
+        plot_power(f,abs_pxx,'original'+"(samprate= " +str(samp_rate) +"Hz)")
         
     _fft=np.fft.fft(_samps)
     _fft=np.fft.fftshift(_fft)
@@ -607,20 +613,20 @@ def test_wvt () :
     #samps=samps[5000:9900]
     samps=samps[5000:9000]
     f,pxx=wvt_periodgram(samps,samp_rate,1024,True)
-    xplot(f,pxx,'WVT power(periodgram): ')
+    plot_power(f,pxx,'WVT power(periodgram): ')
     
     _samps,tpm_samp_rate=wvt_power(samps,samp_rate,2)
     f,pxx=wvt_periodgram(_samps,tpm_samp_rate,1024,True)
-    xplot(f,pxx,'WVT power(periodgram): '+"power(2)")
+    plot_power(f,pxx,'WVT power(periodgram): '+"power(2)")
 
     _samps=wvt_power2_FM(samps,samp_rate)
     f,pxx=wvt_periodgram(_samps,samp_rate,1024,True)
-    xplot(f,pxx,'WVT power2 FMDET')
+    plot_power(f,pxx,'WVT power2 FMDET')
 
     _samps=wvt_AM_DET(samps,samp_rate)
     f,pxx=wvt_periodgram(_samps,samp_rate,1024,True)
-    xplot(f,pxx,'WVT AMDET')
-    #xplot(y,'WVT AM DET') 
+    plot_power(f,pxx,'WVT AMDET')
+    #plot_power(y,'WVT AM DET') 
 
 def test_compare_periodgram(samps)     :
     """
@@ -654,7 +660,7 @@ def test_sine_wave():
     samps=add_noise(samps)
     #samps=analytic_signal(samps)
     f,pxx=wvt_periodgram(samps,8e3,1024,True)
-    xplot(f,pxx,"sin wave (real) 8k, 2000Hz with Noise")
+    plot_power(f,pxx,"sin wave (real) 8k, 2000Hz with Noise")
 
     """ 사인파(complex) 생성 """
     samps=make_exp1j(8e3,1e3,1) # 8k,2k, 1 sec
@@ -664,8 +670,8 @@ def test_sine_wave():
     #samps=a+b
     samps=add_noise(samps)
     f,pxx=wvt_periodgram(samps,8e3)
-    #xplot(f,pxx,"exp1j, 2kHz")
-    xplot(f,pxx,"sine wave (cplx) 8k, 1k with noise") 
+    #plot_power(f,pxx,"exp1j, 2kHz")
+    plot_power(f,pxx,"sine wave (cplx) 8k, 1k with noise") 
     
 
 def make_bit2pulse(bits, symbrate): 
@@ -708,10 +714,11 @@ if __name__ == "__main__":
     
     #samps=tone_a[0:1024] #+  tone_b[0:1024] +0j 
     #samps=tone_a[0:1024]# + 0j#+  tone_b[0:1024] +0j 
-    #xplot(tone_a," tone_a :time domain")
-    #xplot(samps,"time domain")
+    #plot_power(tone_a," tone_a :time domain")
+    #plot_power(samps,"time domain")
     #samps=samps + samp_rand
     #xplot(samps[0:100],"time domain")
+    #plot_power(samps[0:100],"time domain")
     pass
     
 
