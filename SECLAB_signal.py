@@ -4,9 +4,8 @@
 Created on Sat Apr 24 17:01:29 2020
 @author: hyun
 
-1.0e :
-    b. fmdet, amdet, power(n) 제대로 동작 
-    c. 작성중 
+1.1 : new start 2025.5.3
+    b. fmdet, amdet, power(n) 제대로 동작
     d. analytic concept
     e. typo (2024/02/16)
     
@@ -348,7 +347,6 @@ def make_special_signal() :
     
     return 
 
-
 def make_fsk_samples(samp_rate,data):    
     return
 
@@ -502,11 +500,12 @@ def test_fft_shifting():
     print(ang.mean(),ang.std())
     return ang
     
-import SECLAB_pcm
 def test_rotator():    
     """
      * 주파수 이동 테스트 : rotator()를 이용 (hyun)
     """
+    
+    import SECLAB_pcm
     path="/home/sdr/data/Documents/presetation/K-10191116H0005_G126Z_467.500_0130_0131_16t_160k.pcm.real.160k.16t"
     samp_rate=160e3
     samps=SECLAB_pcm.loadPCM_16t(path,20000) #
@@ -668,13 +667,28 @@ def test_sine_wave():
     #xplot(f,pxx,"exp1j, 2kHz")
     xplot(f,pxx,"sine wave (cplx) 8k, 1k with noise") 
     
+
+def make_bit2pulse(bits, symbrate): 
+    samps = np.arange(symbrate*bits.length,dtype=np.complex64)
+    for i,b in enumerate(bits):
+        if b == True : 
+            samps[i]=1.0 
+    return
+
+
+def test_bit2pulse():
+    from bitstring import Bits, BitArray, BitStream
+
+    ba1  = BitArray(r"0xDEADBEEF")
+    make_bit2pulse(ba1, 300)
     
 #from PyQt5 import QtMultimediaWidgets # sound 안됨!!!
 import sys
 #### __main__
-if __name__ == "__main__":        
+if __name__ == "__main__": 
+    test_bit2pulse()       
     #test_triangle_wave()
-    test_cplx2real()
+    #test_cplx2real()
     #test_fftfreq()  # ?
     #test_hilbert() # hilbert 동작 확인!    
     #test_rotator()  # rotator 동작 확인!    
@@ -698,5 +712,6 @@ if __name__ == "__main__":
     #xplot(samps,"time domain")
     #samps=samps + samp_rand
     #xplot(samps[0:100],"time domain")
+    pass
     
 
