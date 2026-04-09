@@ -13,6 +13,7 @@ GRID_SIZE = 20
 GRID_WIDTH = WIDTH // GRID_SIZE
 GRID_HEIGHT = HEIGHT // GRID_SIZE
 FPS = 15
+
 ACTION_SPACE = 3  # 0: 직진, 1: 우회전, 2: 좌회전
 STATE_SIZE = 11   # [위험3, 방향4, 먹이방향4]
 
@@ -21,12 +22,7 @@ class SnakeEnv:
     def __init__(self, render=True):
         self.render_flag = render
         if self.render_flag:
-            #os.environ["SDL_VIDEODRIVER"] = "x11"  # 리눅스/맥 환경용 (필요시 주석)
-            pygame.init()
-            self.screen = pygame.display.set_mode((WIDTH, HEIGHT))
-            pygame.display.set_caption("Snake DQN - Inference")
-            self.clock = pygame.time.Clock()
-            self.font = pygame.font.SysFont("consolas", 24)
+            pass
         self.reset()
 
     def reset(self):
@@ -42,11 +38,7 @@ class SnakeEnv:
         return self._get_state()
 
     def _spawn_food(self):
-        while True:
-            pos = [random.randrange(0, GRID_WIDTH) * GRID_SIZE,
-                   random.randrange(0, GRID_HEIGHT) * GRID_SIZE]
-            if pos not in self.body:
-                return pos
+        pass
 
     def _is_collision(self, point):
         return (point[0] < 0 or point[0] >= WIDTH or
@@ -108,14 +100,10 @@ class SnakeEnv:
         return self._get_state(), reward, self.done, self.score
 
     def _render(self):
-        self.screen.fill((0, 0, 0))
-        for seg in self.body:
-            pygame.draw.rect(self.screen, (0, 200, 0), (seg[0], seg[1], GRID_SIZE, GRID_SIZE))
-        pygame.draw.rect(self.screen, (255, 50, 50), (self.food[0], self.food[1], GRID_SIZE, GRID_SIZE))
-        text = self.font.render(f"Score: {self.score}", True, (255, 255, 255))
-        self.screen.blit(text, (10, 10))
-        pygame.display.update()
-        self.clock.tick(FPS)
+        #self.screen.fill((0, 0, 0))
+        #pygame.display.update()
+        #self.clock.tick(FPS)
+        pass
 
 # ─── DQN AGENT (PyTorch) ───────────────────────────────────────────────────────
 class DQN(nn.Module):
@@ -181,7 +169,7 @@ class DQNAgent:
 
 # ─── TRAINING & INFERENCE ───────────────────────────────────────────────────────
 def train(epochs=1000, target_update=10):
-    env = SnakeEnv(render=False)  # 학습 시 렌더링 OFF (속도 향상)
+    env = SnakeGame(render=True)  # 학습 시 렌더링 OFF (속도 향상)
     agent = DQNAgent()
     scores = []
     
@@ -228,27 +216,19 @@ def play1():
             state = env.reset()
 
 def play():
-    env = SnakeEnv(render=True)
-    #agent = DQNAgent()
-    #agent.policy_net.load_state_dict(torch.load("snake_dqn.pth", map_location=agent.device))
-    #agent.epsilon = 0.0  # Pure exploitation
-    
-    print("🎮 Inference Mode - Press ESC to quit")
+    env = SnakeEnv(render=True)    
     state = env.reset()
     done=False
     while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                pygame.quit()
-                return
+        #env.process
         #action = agent.act(state)
         #state, _, done, _ = env.step(action)
-        if done:
-            state = env.reset()
+        #if done:
+        #    env.reset()
 
 
 if __name__ == "__main__":
-    import sys
+    #import sys
     #mode = sys.argv[1] 
     #if len(sys.argv) > 1 else "train"
     mode = "play"
