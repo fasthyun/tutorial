@@ -6,7 +6,8 @@ Created on Tue Apr  7 21:44:18 2026
 @author: hyun
 perfect works!!
 
-클래스와 차이점 진짜 예제로 좋다...
+* 클래스와 차이점 진짜 예제로 좋다...(hyun)
+* 그리고 추가할것이....
 
 """
 import pygame
@@ -15,7 +16,7 @@ import sys
 
 # ─── CONFIGURATION ───────────────────────────────────────────────────────────────
 SCREEN_WIDTH, SCREEN_HEIGHT = 640*2, 480*2
-GRID_SIZE = 80
+GRID_SIZE = 40
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
 FPS = 12  # Controls game speed (classic snake feel)
@@ -39,9 +40,11 @@ class SnakeGame:
         self.font = pygame.font.SysFont("consolas", 32)
         self.small_font = pygame.font.SysFont("consolas", 24)        
         self.render_flag = render
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))        
+        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3 by Human
+        
         if self.render_flag:            
-            #pygame.display.set_caption("Snake DQN - Inference")            
+            #pygame.display.set_caption("Snake DQN - Inference")
             pass
         self.reset()
         
@@ -58,7 +61,7 @@ class SnakeGame:
         self.snake_body = [
             list(self.head_pos),
             [self.head_pos[0] , self.head_pos[1]],
-            [self.head_pos[0] - 2 , self.head_pos[1]]
+            [self.head_pos[0] - 2 , self.head_pos[1]] # length 3 
         ]
         
         # dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP, RIGHT, DOWN, LEFT
@@ -75,6 +78,7 @@ class SnakeGame:
                    random.randrange(0, GRID_HEIGHT)]
             if pos not in snake_body:
                 return pos
+            
     def process_keyevent(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: 
@@ -102,6 +106,21 @@ class SnakeGame:
                         sys.exit() 
                     pass
     
+    def is_collision(self, _point):        
+        # ── COLLISION / EVASION LOGIC ──
+        # 1. Wall Evasion
+        wall_hit = (self.head_pos[0] < 0 or self.head_pos[0] >= GRID_WIDTH or 
+                    self.head_pos[1] < 0 or self.head_pos[1] >= GRID_HEIGHT)
+        
+        # 2. Self Evasion
+        self_hit = self.head_pos in self.snake_body[1:]
+        
+        if wall_hit or self_hit:
+            return True
+        else:
+            return False
+    
+    
     def process_game(self):              
         self.direction = self.change_to        
         if self.state=="START":
@@ -125,35 +144,12 @@ class SnakeGame:
             else:
                 self.snake_body.pop()  # Remove tail if not eating
     
-            # ── COLLISION / EVASION LOGIC ──
-            # 1. Wall Evasion
-            wall_hit = (self.head_pos[0] < 0 or self.head_pos[0] >= GRID_WIDTH or 
-                        self.head_pos[1] < 0 or self.head_pos[1] >= GRID_HEIGHT)
-            
-            # 2. Self Evasion
-            self_hit = self.head_pos in self.snake_body[1:]
-    
-            if wall_hit or self_hit:
+            if self.is_collision(None):                
                 self.state="GAME_OVER"
                 
         if self.state=="GAME_OVER":
             pass
     
-    def render(self):
-        # ── RENDERING ──        
-        if self.state=="START":
-            self.screen.fill(BLACK)
-            self.draw_grid()
-            self.draw_snake(self.snake_body)
-            self.draw_food(self.food_pos)
-            self.show_score(self.score)            
-        if self.state=="GAME_OVER":
-            self.game_over_screen(self.score)        
-        
-        if self.render_flag==False: # Temp!
-            self.clock.tick(FPS) # delay? or sleep?               
-        pygame.display.update()
-        
     def draw_grid(self):
         for x in range(0, SCREEN_WIDTH, GRID_SIZE):
             pygame.draw.line(self.screen, GRID_COLOR, (x, 0), (x, SCREEN_HEIGHT))
@@ -184,6 +180,21 @@ class SnakeGame:
         self.screen.blit(score_txt, (SCREEN_WIDTH//2 - score_txt.get_width()//2, SCREEN_HEIGHT//2))
         self.screen.blit(prompt, (SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//3 * 2))
  
+    def render(self):
+        # ── RENDERING ──        
+        if self.state=="START":
+            self.screen.fill(BLACK)
+            self.draw_grid()
+            self.draw_snake(self.snake_body)
+            self.draw_food(self.food_pos)
+            self.show_score(self.score)            
+        if self.state=="GAME_OVER":
+            self.game_over_screen(self.score)        
+        
+        if self.render_flag==True: # Temp!
+            self.clock.tick(FPS) # delay? or sleep?               
+        pygame.display.update()
+        
 # ─── ENTRY POINT ─────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     _game=SnakeGame()

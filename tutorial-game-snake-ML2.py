@@ -7,6 +7,8 @@ import torch.optim as optim
 from collections import deque
 import os
 
+from tutorial_game_snake_class import SnakeGame
+
 # ─── CONFIG ──────────────────────────────────────────────────────────────────────
 WIDTH, HEIGHT = 640, 480
 GRID_SIZE = 20
@@ -26,71 +28,71 @@ class SnakeEnv:
         self.reset()
 
     def reset(self):
-        self.head = [GRID_SIZE * 5, GRID_SIZE * 5]
+        self.head = [5, 5]
         self.body = [list(self.head),
-                     [self.head[0] - GRID_SIZE, self.head[1]],
-                     [self.head[0] - 2 * GRID_SIZE, self.head[1]]]
+                     [self.head[0] , self.head[1]],
+                     [self.head[0] - 2 , self.head[1]]] # tail length 3 
         self.dir_idx = 1  # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
-        self.food = self._spawn_food()
+        self.food_pos = self.spawn_food_pos()
         self.score = 0
         self.steps = 0
         self.done = False
+        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3 by Human
         return self._get_state()
 
-    def _spawn_food(self):
+    def spawn_food(self):
         pass
 
-    def _is_collision(self, point):
-        return (point[0] < 0 or point[0] >= WIDTH or
-                point[1] < 0 or point[1] >= HEIGHT or
-                point in self.body)
+    def is_collision(self, point):
+        pass    
 
     def _get_state(self):
-        head = self.head
-        dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP, RIGHT, DOWN, LEFT
+        head = self.head_pos #
+        dirs = self.dirs
         
-        # 현재 방향 기준 상대적 방향 (직진, 우회전, 좌회전)
-        rel_dirs = [dirs[self.dir_idx], dirs[(self.dir_idx+1)%4], dirs[(self.dir_idx+3)%4]]
+        # 현재 방향 기준 상대적 방향 (직진, 우회전, 좌회전)    
+        rel_dirs = [dirs[self.dir_idx], dirs[(self.dir_idx+1)%4], dirs[(self.dir_idx+3)%4]] 
         
-        # 1. 전방/우측/좌측 충돌 여부
-        danger = [self._is_collision([head[0]+d[0]*GRID_SIZE, head[1]+d[1]*GRID_SIZE]) for d in rel_dirs]
+        # 1. 전방/우측/좌측 충돌 여부, 미리 예측 하는 건뎅....
+        danger = [self.is_collision([head[0]+d[0], head[1]+d[1]]) for d in rel_dirs] 
         
-        # 2. 현재 방향 (One-hot)
-        direction = [1 if i == self.dir_idx else 0 for i in range(4)]
-        
-        # 3. 먹이 상대 위치
-        food_dir = [self.food[0] < head[0], self.food[0] > head[0],
-                    self.food[1] < head[1], self.food[1] > head[1]]
+                
+        direction = [1 if i == self.dir_idx else 0 for i in range(4)] # 2. 현재 방향 (One-hot)
+                
+        food_dir = [self.food_pos[0] < head[0], self.food_pos[0] > head[0],  
+                    self.food_pos[1] < head[1], self.food_pos[1] > head[1]] # 3. 먹이 상대 위치
         
         return np.array([*danger, *direction, *food_dir], dtype=np.float32)
 
     def step(self, action):
+        head = self.head_pos 
         # action: 0=straight, 1=right, 2=left
-        if action == 1: self.dir_idx = (self.dir_idx + 1) % 4
-        elif action == 2: self.dir_idx = (self.dir_idx + 3) % 4
+        if action == 1: 
+            self.dir_idx = (self.dir_idx + 1) % 4
+        elif action == 2: 
+            self.dir_idx = (self.dir_idx + 3) % 4
         
-        dx, dy = [(0, -1), (1, 0), (0, 1), (-1, 0)][self.dir_idx]
-        self.head = [self.head[0] + dx*GRID_SIZE, self.head[1] + dy*GRID_SIZE]
-        self.body.insert(0, list(self.head))
+        dx, dy = self.dir[self.dir_idx] # 
+        
+        head = [head[0] + dx, head[1] + dy]
+        self.body.insert(0, list(head))
         
         reward = 0
         self.steps += 1
         
-        if self.head == self.food:
+        if head == self.food_pos:
             self.score += 1
             reward = 10
-            self.food = self._spawn_food()
+            self.food_pos = self.spawn_food()
         else:
             self.body.pop()
-            reward = -0.1  # 속도 장려 페널티
-
-        # 사망 체크
-        if self._is_collision(self.head):
+            reward = -0.01  # 속도 장려 페널티
+        
+        if self.is_collision(head): # 사망 체크
             self.done = True
-            reward = -10
-            
-        # 무한 루프 방지
-        if self.steps > 100 * (len(self.body) + 3):
+            reward = -10            
+        
+        if self.steps > 100 * (len(self.body) + 3): # 무한 루프 방지
             self.done = True
             reward = -10
 
@@ -100,9 +102,6 @@ class SnakeEnv:
         return self._get_state(), reward, self.done, self.score
 
     def _render(self):
-        #self.screen.fill((0, 0, 0))
-        #pygame.display.update()
-        #self.clock.tick(FPS)
         pass
 
 # ─── DQN AGENT (PyTorch) ───────────────────────────────────────────────────────
@@ -220,6 +219,7 @@ def play():
     state = env.reset()
     done=False
     while True:
+        pass
         #env.process
         #action = agent.act(state)
         #state, _, done, _ = env.step(action)
