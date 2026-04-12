@@ -44,9 +44,9 @@ class SnakeEnv:
         pass
 
     def is_collision(self, point):
-        pass    
+        pass
 
-    def _get_state(self):
+    def _get_state(self): # 
         head = self.head_pos #
         dirs = self.dirs
         
@@ -54,8 +54,7 @@ class SnakeEnv:
         rel_dirs = [dirs[self.dir_idx], dirs[(self.dir_idx+1)%4], dirs[(self.dir_idx+3)%4]] 
         
         # 1. 전방/우측/좌측 충돌 여부, 미리 예측 하는 건뎅....
-        danger = [self.is_collision([head[0]+d[0], head[1]+d[1]]) for d in rel_dirs] 
-        
+        danger = [self.is_collision([head[0]+d[0], head[1]+d[1]]) for d in rel_dirs]         
                 
         direction = [1 if i == self.dir_idx else 0 for i in range(4)] # 2. 현재 방향 (One-hot)
                 

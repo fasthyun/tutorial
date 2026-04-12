@@ -19,7 +19,7 @@ SCREEN_WIDTH, SCREEN_HEIGHT = 640*2, 480*2
 GRID_SIZE = 40
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
-FPS = 12  # Controls game speed (classic snake feel)
+FPS = 12  # Controls game speed (classic snake feel) I Dont like this (hyun)
 
 # Colors
 BLACK = (0, 0, 0)
@@ -31,7 +31,39 @@ GRID_COLOR = (30, 30, 30)
 
 # ─── HELPER FUNCTIONS ────────────────────────────────────────────────────────────
 
-class SnakeGame:
+class SnakeBase:
+    def draw_grid(self):
+        for x in range(0, SCREEN_WIDTH, GRID_SIZE):
+            pygame.draw.line(self.screen, GRID_COLOR, (x, 0), (x, SCREEN_HEIGHT))
+        for y in range(0, SCREEN_HEIGHT, GRID_SIZE):
+            pygame.draw.line(self.screen, GRID_COLOR, (0, y), (SCREEN_WIDTH, y))
+
+    def draw_snake(self,snake_body):
+        for i, segment in enumerate(snake_body):
+            color = SNAKE_HEAD_COLOR if i == 0 else SNAKE_COLOR
+            pygame.draw.rect(self.screen, color, (segment[0]*GRID_SIZE, segment[1]*GRID_SIZE, GRID_SIZE, GRID_SIZE))
+            pygame.draw.rect(self.screen, BLACK, (segment[0]*GRID_SIZE, segment[1]*GRID_SIZE, GRID_SIZE, GRID_SIZE), 2)
+
+    def draw_food(self,food_pos):
+        pygame.draw.rect(self.screen, FOOD_COLOR, (food_pos[0]*GRID_SIZE, food_pos[1]*GRID_SIZE, GRID_SIZE, GRID_SIZE))
+
+    def show_score(self, score):
+        text = self.font.render(f"Score: {score}", True, WHITE)
+        self.screen.blit(text, (10, 10))
+
+    def game_over_screen(self,score):
+        # ─── GAME OVER SCREEN ────────────────────────────────────────────────────────────
+        #self.screen.fill(BLACK)
+        title = self.font.render("GAME OVER", True, (255, 50, 50))
+        score_txt = self.font.render(f"Final Score: {score}", True, WHITE)
+        prompt = self.small_font.render("Press [R] to Restart or [Q] to Quit", True, (150, 150, 150))
+        
+        self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//3))
+        self.screen.blit(score_txt, (SCREEN_WIDTH//2 - score_txt.get_width()//2, SCREEN_HEIGHT//2))
+        self.screen.blit(prompt, (SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//3 * 2))
+
+    
+class SnakeGame(SnakeBase):
     def __init__(self, render=True):
         # Initialize pygame
         pygame.init()
@@ -64,8 +96,8 @@ class SnakeGame:
             [self.head_pos[0] - 2 , self.head_pos[1]] # length 3 
         ]
         
-        # dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP, RIGHT, DOWN, LEFT
-        self.direction = "RIGHT" # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
+        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP, RIGHT, DOWN, LEFT
+        self.direction = 1 # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
         self.change_to = self.direction
         self.food_pos = self.spawn_food(self.snake_body)
         self.score = 0
@@ -73,12 +105,31 @@ class SnakeGame:
     
     def spawn_food(self, snake_body):
         """Generates food at a random grid position, ensuring it doesn't spawn on the snake."""
-        while True:
+        while True: # good? hmm...
             pos = [random.randrange(0, GRID_WIDTH),
                    random.randrange(0, GRID_HEIGHT)]
             if pos not in snake_body:
                 return pos
-            
+    def autonomous(self):        
+        head = self.head_pos #
+        dirs = self.dirs
+        
+        dir_idx = self.direction  # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
+        # 현재 방향 기준 상대적 방향 [직진, 우회전, 좌회전]
+        rel_dirs = [dirs[dir_idx], dirs[(dir_idx+1)%4], dirs[(dir_idx+3)%4]]         
+        # 1. 전방/우측/좌측 충돌 여부 ===> 미리 예측 하는 건뎅....
+        danger = [self.is_collision([head[0]+d[0], head[1]+d[1]]) for d in rel_dirs]
+        
+        #direction = [1 if i == dir_idx else 0 for i in range(4)] # 2. 현재 방향 (One-hot) ===> 무의미한뎅...
+                
+        food_dir = [self.food_pos[0] < head[0], self.food_pos[0] > head[0],  
+                    self.food_pos[1] < head[1], self.food_pos[1] > head[1]] # 3. 먹이 상대 위치
+        print(danger,direction)
+        
+        #for i,v in enumerate(danger):
+            #if v == True :
+                #self.direction = 
+        
     def process_keyevent(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: 
@@ -87,14 +138,14 @@ class SnakeGame:
             if event.type == pygame.KEYDOWN:
                 # Prevent 180° turns (direct reversal)
                 if self.state=="START":
-                    if event.key == pygame.K_UP and self.direction != "DOWN":
-                        self.change_to = "UP"
-                    elif event.key == pygame.K_DOWN and self.direction != "UP":
-                        self.change_to = "DOWN"
-                    elif event.key == pygame.K_LEFT and self.direction != "RIGHT":
-                        self.change_to = "LEFT"
-                    elif event.key == pygame.K_RIGHT and self.direction != "LEFT":
-                        self.change_to = "RIGHT"                                        
+                    if event.key == pygame.K_UP and self.direction != 2 : #"DOWN":
+                        self.change_to = 0 #"UP"
+                    elif event.key == pygame.K_DOWN and self.direction != 0 : #"UP":
+                        self.change_to = 2 #"DOWN"
+                    elif event.key == pygame.K_LEFT and self.direction != 1 : #"RIGHT":
+                        self.change_to = 3 #"LEFT"
+                    elif event.key == pygame.K_RIGHT and self.direction !=3 :# "LEFT":
+                        self.change_to = 1 #"RIGHT"                                        
                     elif event.key == pygame.K_ESCAPE:
                         pygame.quit()
                         sys.exit() 
@@ -106,14 +157,15 @@ class SnakeGame:
                         sys.exit() 
                     pass
     
-    def is_collision(self, _point):        
+    def is_collision(self, _pos):        
         # ── COLLISION / EVASION LOGIC ──
+        #_pos 
         # 1. Wall Evasion
-        wall_hit = (self.head_pos[0] < 0 or self.head_pos[0] >= GRID_WIDTH or 
-                    self.head_pos[1] < 0 or self.head_pos[1] >= GRID_HEIGHT)
+        wall_hit = (_pos[0] < 0 or _pos[0] >= GRID_WIDTH or 
+                    _pos[1] < 0 or _pos[1] >= GRID_HEIGHT)
         
         # 2. Self Evasion
-        self_hit = self.head_pos in self.snake_body[1:]
+        self_hit = _pos in self.snake_body[1:]
         
         if wall_hit or self_hit:
             return True
@@ -125,13 +177,13 @@ class SnakeGame:
         self.direction = self.change_to        
         if self.state=="START":
             # ── MOVEMENT ──
-            if self.direction == "UP":
+            if self.direction == 0 :# "UP":
                 self.head_pos[1] -= 1
-            elif self.direction == "DOWN":
+            elif self.direction ==2  : #"DOWN":
                 self.head_pos[1] += 1
-            elif self.direction == "LEFT":
+            elif self.direction ==3: #"LEFT":
                 self.head_pos[0] -= 1
-            elif self.direction == "RIGHT":
+            elif self.direction ==1:# "RIGHT":
                 self.head_pos[0] += 1
     
             # Add new head to body
@@ -144,41 +196,12 @@ class SnakeGame:
             else:
                 self.snake_body.pop()  # Remove tail if not eating
     
-            if self.is_collision(None):                
+            if self.is_collision(self.head_pos):         
                 self.state="GAME_OVER"
                 
         if self.state=="GAME_OVER":
             pass
     
-    def draw_grid(self):
-        for x in range(0, SCREEN_WIDTH, GRID_SIZE):
-            pygame.draw.line(self.screen, GRID_COLOR, (x, 0), (x, SCREEN_HEIGHT))
-        for y in range(0, SCREEN_HEIGHT, GRID_SIZE):
-            pygame.draw.line(self.screen, GRID_COLOR, (0, y), (SCREEN_WIDTH, y))
-
-    def draw_snake(self,snake_body):
-        for i, segment in enumerate(snake_body):
-            color = SNAKE_HEAD_COLOR if i == 0 else SNAKE_COLOR
-            pygame.draw.rect(self.screen, color, (segment[0]*GRID_SIZE, segment[1]*GRID_SIZE, GRID_SIZE, GRID_SIZE))
-            pygame.draw.rect(self.screen, BLACK, (segment[0]*GRID_SIZE, segment[1]*GRID_SIZE, GRID_SIZE, GRID_SIZE), 2)
-
-    def draw_food(self,food_pos):
-        pygame.draw.rect(self.screen, FOOD_COLOR, (food_pos[0]*GRID_SIZE, food_pos[1]*GRID_SIZE, GRID_SIZE, GRID_SIZE))
-
-    def show_score(self, score):
-        text = self.font.render(f"Score: {score}", True, WHITE)
-        self.screen.blit(text, (10, 10))
-
-    def game_over_screen(self,score):
-        # ─── GAME OVER SCREEN ────────────────────────────────────────────────────────────
-        #self.screen.fill(BLACK)
-        title = self.font.render("GAME OVER", True, (255, 50, 50))
-        score_txt = self.font.render(f"Final Score: {score}", True, WHITE)
-        prompt = self.small_font.render("Press [R] to Restart or [Q] to Quit", True, (150, 150, 150))
-        
-        self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//3))
-        self.screen.blit(score_txt, (SCREEN_WIDTH//2 - score_txt.get_width()//2, SCREEN_HEIGHT//2))
-        self.screen.blit(prompt, (SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//3 * 2))
  
     def render(self):
         # ── RENDERING ──        
@@ -202,5 +225,6 @@ if __name__ == "__main__":
     while True:        
         # ── EVENT HANDLING ──
         _game.process_keyevent()
+        _game.autonomous()
         _game.process_game()
         _game.render()
