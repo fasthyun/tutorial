@@ -73,6 +73,7 @@ class SnakeGame(SnakeBase):
         self.small_font = pygame.font.SysFont("consolas", 24)        
         self.render_flag = render
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))        
+        
         self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3 by Human
         
         if self.render_flag:            
@@ -96,7 +97,9 @@ class SnakeGame(SnakeBase):
             [self.head_pos[0] - 2 , self.head_pos[1]] # length 3 
         ]
         
-        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP, RIGHT, DOWN, LEFT
+        # 벡터스타일 방향 표시 절대방향 4개 (dx,dy)
+        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3  
+        
         self.direction = 1 # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
         self.change_to = self.direction
         self.food_pos = self.spawn_food(self.snake_body)
@@ -110,26 +113,42 @@ class SnakeGame(SnakeBase):
                    random.randrange(0, GRID_HEIGHT)]
             if pos not in snake_body:
                 return pos
+    
     def autonomous(self):        
         head = self.head_pos #
         dirs = self.dirs
         
+        # 방향을 복잡하게 정의해버렸네(hyun) 절대방향에서 상대방향으로 바뀜 : self.direction ----> re
+        
         dir_idx = self.direction  # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
         # 현재 방향 기준 상대적 방향 [직진, 우회전, 좌회전]
-        rel_dirs = [dirs[dir_idx], dirs[(dir_idx+1)%4], dirs[(dir_idx+3)%4]]         
+        rel_dirs = [dirs[dir_idx], dirs[(dir_idx+1)%4], dirs[(dir_idx+3)%4]]
         # 1. 전방/우측/좌측 충돌 여부 ===> 미리 예측 하는 건뎅....
         danger = [self.is_collision([head[0]+d[0], head[1]+d[1]]) for d in rel_dirs]
         
-        #direction = [1 if i == dir_idx else 0 for i in range(4)] # 2. 현재 방향 (One-hot) ===> 무의미한뎅...
-                
-        food_dir = [self.food_pos[0] < head[0], self.food_pos[0] > head[0],  
-                    self.food_pos[1] < head[1], self.food_pos[1] > head[1]] # 3. 먹이 상대 위치
-        print(danger,direction)
+        direction = [1 if i == dir_idx else 0 for i in range(4)] # 2. 현재 방향 (One-hot) ===> 무의미한뎅...
         
-        #for i,v in enumerate(danger):
-            #if v == True :
-                #self.direction = 
+        # 3. 먹이 상대 위치 ===> [dx,dy]
+        food_dir = (self.food_pos[0] - head[0], self.food_pos[1] - head[1])
         
+        _d=[self.is_collision([head[0]+d[0], head[1]+d[1]]) for d in rel_dirs]
+        
+        """  절대방향 방식은 안됨!!!
+        if food_dir[0] < 0 :
+            self.change_to =  3 # LEFT
+        else :
+            self.change_to =  1 # RIGHT
+        
+        if food_dir[1] < 0 :
+            self.change_to =  0 # UP
+        else :
+            self.change_to =  2 # DOWN
+        #for i,v in enumerate(self.dirs):
+        #    if v == food_dir :
+        #        self.change_to =  i
+        #        pass
+        """
+        print(food_dir, self.change_to,danger,rel_dirs,direction)
     def process_keyevent(self):
         for event in pygame.event.get():
             if event.type == pygame.QUIT: 
