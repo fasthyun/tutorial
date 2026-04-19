@@ -16,10 +16,10 @@ import sys
 
 # ─── CONFIGURATION ───────────────────────────────────────────────────────────────
 SCREEN_WIDTH, SCREEN_HEIGHT = 640*2, 480*2
-GRID_SIZE = 40
+GRID_SIZE = 80
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
-FPS = 12  # Controls game speed (classic snake feel) I Dont like this (hyun)
+FPS = 80  # Controls game speed (classic snake feel) I Dont like this (hyun)
 
 # Colors
 BLACK = (0, 0, 0)
@@ -28,6 +28,8 @@ SNAKE_COLOR = (0, 200, 0)
 SNAKE_HEAD_COLOR = (0, 255, 0)
 FOOD_COLOR = (255, 50, 50)
 GRID_COLOR = (30, 30, 30)
+
+
 
 # ─── HELPER FUNCTIONS ────────────────────────────────────────────────────────────
 
@@ -72,17 +74,18 @@ class SnakeGame(SnakeBase):
         self.font = pygame.font.SysFont("consolas", 32)
         self.small_font = pygame.font.SysFont("consolas", 24)        
         self.render_flag = render
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))        
+        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))                       
         
-        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3 by Human
-        
-        if self.render_flag:            
-            #pygame.display.set_caption("Snake DQN - Inference")
-            pass
-        self.reset()
-        
-    def reset(self): # for ML_DQN
         self.game_init()
+        
+        
+    def xreset(self): # for ML_DQN
+        #self.game_init()
+        #self.dir_idx = 1  # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
+        #self.steps = 0
+        #self.done = False
+        #return self._get_state()
+        pass
     
     def state(self): # for ML_DQN
         return
@@ -101,6 +104,7 @@ class SnakeGame(SnakeBase):
         self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3  
         
         self.direction = 1 # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
+        self.dir_idx = 1 # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
         self.change_to = self.direction
         self.food_pos = self.spawn_food(self.snake_body)
         self.score = 0
@@ -116,10 +120,8 @@ class SnakeGame(SnakeBase):
     
     def autonomous(self):        
         head = self.head_pos #
-        dirs = self.dirs
-        
-        # 방향을 복잡하게 정의해버렸네(hyun) 절대방향에서 상대방향으로 바뀜 : self.direction ----> re
-        
+        dirs = self.dirs        
+        # 방향을 복잡하게 정의해버렸네(hyun) 절대방향에서 상대방향으로 바뀜 : self.direction ----> re        
         dir_idx = self.direction  # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
         # 현재 방향 기준 상대적 방향 [직진, 우회전, 좌회전]
         rel_dirs = [dirs[dir_idx], dirs[(dir_idx+1)%4], dirs[(dir_idx+3)%4]]
@@ -177,8 +179,7 @@ class SnakeGame(SnakeBase):
                     pass
     
     def is_collision(self, _pos):        
-        # ── COLLISION / EVASION LOGIC ──
-        #_pos 
+        # ── COLLISION / EVASION LOGIC ──        
         # 1. Wall Evasion
         wall_hit = (_pos[0] < 0 or _pos[0] >= GRID_WIDTH or 
                     _pos[1] < 0 or _pos[1] >= GRID_HEIGHT)
