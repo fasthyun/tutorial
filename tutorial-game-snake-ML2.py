@@ -23,13 +23,14 @@ class SnakeEnv(SnakeGame):
         #if self.render_flag:
         #    pass
         #self.reset()
-        self.game_init()
+        #self.game_init()
+        self.FPS=100
 
     def reset(self):
         self.done = False
         self.steps =0 #!!!
         self.game_init()
-        #return self._get_state()
+        return self._get_state()
 
     
     def _get_state(self): # 
@@ -63,17 +64,21 @@ class SnakeEnv(SnakeGame):
         #dx, dy = self.dir[self.dir_idx] #         
         #head = [head[0] + dx, head[1] + dy]
         #self.snake_body.insert(0, list(head))
-        self.change_to = self.dir_idx        
-        self.reward = 0  
+        self.change_to = self.dir_idx                
         self.process_keyevent()
         self.process_game()
         self.steps += 1
         
         if self.steps > 100 * (len(self.snake_body) + 3): # 무한 루프 방지
             self.done = True
-            self.reward = -10
+            self.reward -= 10
         
-        if self.state == "GAME_OVER":
+        if self.score > self.score_prev: # hit something!
+            self.reward += 10 #
+            self.score_prev = self.score
+        
+        if self.state == "GAME_OVER": # hit something!
+            self.reward -= 10 # 
             self.done = True
             
         if self.render_flag:
@@ -119,11 +124,19 @@ class DQNAgent:
         with torch.no_grad():
             return torch.argmax(self.policy_net(state_t), dim=1).item()
 
-    def replay(self):
-        if len(self.memory) < self.batch_size: return
+    def learn(self): # learn
+        if len(self.memory) < self.batch_size: 
+            return
         batch = random.sample(self.memory, self.batch_size)
         states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
-        
+        #states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
+        #states, actions, rewards, next_states, dones = zip(*batch)
+        """    torch.tensor(np.array(states), dtype=torch.float32),
+           torch.tensor(np.array(actions), dtype=torch.long).unsqueeze(1),
+           torch.tensor(np.array(rewards), dtype=torch.float32).unsqueeze(1),
+           torch.tensor(np.array(next_states), dtype=torch.float32),
+           torch.tensor(np.array(dones), dtype=torch.float32).unsqueeze(1)
+           """
         s_t = torch.FloatTensor(states).to(self.device)
         ns_t = torch.FloatTensor(next_states).to(self.device)
         a_t = torch.LongTensor(actions).unsqueeze(1).to(self.device)
@@ -147,30 +160,36 @@ class DQNAgent:
 
 # ─── TRAINING & INFERENCE ───────────────────────────────────────────────────────
 def train(epochs=1000, target_update=10):
-    env = SnakeEnv(render=True)  # 학습 시 렌더링 OFF (속도 향상)
+    
+    env = SnakeEnv(render=False)  # 학습 시 렌더링 OFF (속도 향상)
     agent = DQNAgent()
+    if os.path.exists("snake_dqn.pth"):
+        print("❌ 학습된 모델이 있음")
+        #agent.policy_net.load_state_dict(torch.load("snake_dqn.pth", map_location=agent.device))
+        #agent.epsilon = 0.0  # Pure exploitation
+ 
     scores = []
     
     print(f"🚀 Training started on {agent.device}")
     for ep in range(1, epochs + 1):
-        state = env.reset()
+        state = env.reset() 
+        env.reward = 0
         #print("x1")
         while True:
             action = agent.act(state)
             next_state, reward, done, score = env.step(action)
-            agent.remember(state, action, reward, next_state, done)
-            #agent.replay()
+            agent.remember(state, action, reward, next_state, done)            
             state = next_state
             if done: 
                 break
-            
-        scores.append(score)
+        agent.learn()
+        #scores.append(score)
         if ep % target_update == 0:
             agent.update_target()
         if ep % 50 == 0:
             avg = np.mean(scores[-50:])
             print(f"Ep {ep:4d} | Score: {score:3d} | Eps: {agent.epsilon:.3f} | Avg50: {avg:.2f}")
-            
+    env.quit()
     torch.save(agent.policy_net.state_dict(), "snake_dqn.pth")
     print("✅ Model saved to snake_dqn.pth")
 
@@ -178,7 +197,7 @@ def play1():
     if not os.path.exists("snake_dqn.pth"):
         print("❌ 학습된 모델이 없습니다. 먼저 train()을 실행하세요.")
         return
-    env = SnakeEnv(render=True)
+    env = SnakeEnv(render=False)
     agent = DQNAgent()
     agent.policy_net.load_state_dict(torch.load("snake_dqn.pth", map_location=agent.device))
     agent.epsilon = 0.0  # Pure exploitation
@@ -224,7 +243,7 @@ if __name__ == "__main__":
     #if len(sys.argv) > 1 else "train"
     mode = "train"
     if mode == "train":
-        train(epochs=30)
+        train(epochs=1000)
     elif mode == "play":
         play()
     else:

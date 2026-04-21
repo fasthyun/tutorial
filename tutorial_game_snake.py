@@ -19,7 +19,6 @@ SCREEN_WIDTH, SCREEN_HEIGHT = 640*2, 480*2
 GRID_SIZE = 80
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
-FPS = 80  # Controls game speed (classic snake feel) I Dont like this (hyun)
 
 # Colors
 BLACK = (0, 0, 0)
@@ -68,16 +67,21 @@ class SnakeBase:
 class SnakeGame(SnakeBase):
     def __init__(self, render=True):
         # Initialize pygame
+        self.FPS = 10  # Controls game speed (classic snake feel) I Dont like this (hyun)
         pygame.init()
-        pygame.display.set_caption("Classic Snake Game")
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont("consolas", 32)
-        self.small_font = pygame.font.SysFont("consolas", 24)        
         self.render_flag = render
-        self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))                       
+        if render == True:
+            pygame.display.set_caption("Classic Snake Game")        
+            self.font = pygame.font.SysFont("consolas", 32)
+            self.small_font = pygame.font.SysFont("consolas", 24)                    
+            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))                               
         
         self.game_init()
-        
+    
+    def quit(self):
+        pygame.quit()
+        sys.exit() 
         
     def xreset(self): # for ML_DQN
         #self.game_init()
@@ -108,6 +112,7 @@ class SnakeGame(SnakeBase):
         self.change_to = self.direction
         self.food_pos = self.spawn_food(self.snake_body)
         self.score = 0
+        self.score_prev=0
         self.state = "START" # START, DEAD , GAME_OVER
     
     def spawn_food(self, snake_body):
@@ -203,7 +208,7 @@ class SnakeGame(SnakeBase):
                 self.head_pos[1] += 1
             elif self.direction ==3: #"LEFT":
                 self.head_pos[0] -= 1
-            elif self.direction ==1:# "RIGHT":
+            elif self.direction ==1: #"RIGHT":
                 self.head_pos[0] += 1
     
             # Add new head to body
@@ -216,10 +221,11 @@ class SnakeGame(SnakeBase):
             else:
                 self.snake_body.pop()  # Remove tail if not eating
     
-            if self.is_collision(self.head_pos):         
+            if self.is_collision(self.head_pos):
                 self.state="GAME_OVER"
                 
         if self.state=="GAME_OVER":
+            # do something
             pass
     
  
@@ -235,7 +241,7 @@ class SnakeGame(SnakeBase):
             self.game_over_screen(self.score)        
         
         if self.render_flag==True: # Temp!
-            self.clock.tick(FPS) # delay? or sleep?               
+            self.clock.tick(self.FPS) # delay? or sleep?               
         pygame.display.update()
         
 # ─── ENTRY POINT ─────────────────────────────────────────────────────────────────
