@@ -24,7 +24,9 @@ class SnakeEnv(SnakeGame):
         #    pass
         #self.reset()
         #self.game_init()
-        self.FPS=100
+        self.FPS=30
+        self.reward = 0
+        self.step_count_without_reward=0
 
     def reset(self):
         self.done = False
@@ -61,21 +63,25 @@ class SnakeEnv(SnakeGame):
         elif action == 2: 
             self.dir_idx = (self.dir_idx + 3) % 4
         
-        #dx, dy = self.dir[self.dir_idx] #         
-        #head = [head[0] + dx, head[1] + dy]
-        #self.snake_body.insert(0, list(head))
         self.change_to = self.dir_idx                
         self.process_keyevent()
-        self.process_game()
-        self.steps += 1
+        self.process_game() # game process        
         
-        if self.steps > 100 * (len(self.snake_body) + 3): # 무한 루프 방지
-            self.done = True
-            self.reward -= 10
+        #if self.steps > 10 * (len(self.snake_body) + 3): # 무한 루프 방지
+        #    self.reward -= 10
+        #    self.done = True            
+        if self.step_count_without_reward > 30 : # no eat then, 
+            self.reward -= 1
+            self.step_count_without_reward=0
+            if self.reward < -30 :      
+                self.done = True
+                #self.reward = -100
         
         if self.score > self.score_prev: # hit something!
             self.reward += 10 #
+            self.step_count_without_reward=0
             self.score_prev = self.score
+            self.done = True
         
         if self.state == "GAME_OVER": # hit something!
             self.reward -= 10 # 
@@ -83,7 +89,9 @@ class SnakeEnv(SnakeGame):
             
         if self.render_flag:
             self.render()
-            
+        self.steps += 1
+        self.step_count_without_reward+=1
+        
         return self._get_state(), self.reward, self.done, self.score
 
     
@@ -111,16 +119,18 @@ class DQNAgent:
         self.gamma = 0.95
         self.epsilon = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.995
+        self.epsilon_decay = 0.9996
         self.batch_size = 64
 
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
-    def act(self, state):
+    def action(self, state):
         if np.random.rand() <= self.epsilon:
             return random.randrange(ACTION_SPACE)
+        
         state_t = torch.FloatTensor(state).unsqueeze(0).to(self.device)
+        
         with torch.no_grad():
             return torch.argmax(self.policy_net(state_t), dim=1).item()
 
@@ -131,12 +141,13 @@ class DQNAgent:
         states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
         #states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
         #states, actions, rewards, next_states, dones = zip(*batch)
-        """    torch.tensor(np.array(states), dtype=torch.float32),
-           torch.tensor(np.array(actions), dtype=torch.long).unsqueeze(1),
-           torch.tensor(np.array(rewards), dtype=torch.float32).unsqueeze(1),
-           torch.tensor(np.array(next_states), dtype=torch.float32),
-           torch.tensor(np.array(dones), dtype=torch.float32).unsqueeze(1)
-           """
+        """  
+            torch.tensor(np.array(states), dtype=torch.float32),
+            torch.tensor(np.array(actions), dtype=torch.long).unsqueeze(1),
+            torch.tensor(np.array(rewards), dtype=torch.float32).unsqueeze(1),
+            torch.tensor(np.array(next_states), dtype=torch.float32),
+            torch.tensor(np.array(dones), dtype=torch.float32).unsqueeze(1)
+        """
         s_t = torch.FloatTensor(states).to(self.device)
         ns_t = torch.FloatTensor(next_states).to(self.device)
         a_t = torch.LongTensor(actions).unsqueeze(1).to(self.device)
@@ -161,58 +172,36 @@ class DQNAgent:
 # ─── TRAINING & INFERENCE ───────────────────────────────────────────────────────
 def train(epochs=1000, target_update=10):
     
-    env = SnakeEnv(render=False)  # 학습 시 렌더링 OFF (속도 향상)
+    env = SnakeEnv(render=True)  # 학습 시 렌더링 OFF (속도 향상)
     agent = DQNAgent()
-    if os.path.exists("snake_dqn.pth"):
-        print("❌ 학습된 모델이 있음")
-        #agent.policy_net.load_state_dict(torch.load("snake_dqn.pth", map_location=agent.device))
-        #agent.epsilon = 0.0  # Pure exploitation
- 
-    scores = []
     
+    scores = []    
     print(f"🚀 Training started on {agent.device}")
     for ep in range(1, epochs + 1):
         state = env.reset() 
         env.reward = 0
         #print("x1")
         while True:
-            action = agent.act(state)
-            next_state, reward, done, score = env.step(action)
-            agent.remember(state, action, reward, next_state, done)            
+            _action = agent.action(state)
+            next_state, reward, done, score = env.step(_action)
+            agent.remember(state, _action, reward, next_state, done)            
             state = next_state
+            agent.learn()    
             if done: 
                 break
-        agent.learn()
-        #scores.append(score)
+            
+        
+        scores.append(score)
         if ep % target_update == 0:
             agent.update_target()
         if ep % 50 == 0:
             avg = np.mean(scores[-50:])
-            print(f"Ep {ep:4d} | Score: {score:3d} | Eps: {agent.epsilon:.3f} | Avg50: {avg:.2f}")
-    env.quit()
+            print(f"Ep {ep:4d} | Score: {score:3d} | Eps: {agent.epsilon:.3f} | Avg50: {avg:.2f}", agent.epsilon)
+            
     torch.save(agent.policy_net.state_dict(), "snake_dqn.pth")
     print("✅ Model saved to snake_dqn.pth")
-
-def play1():
-    if not os.path.exists("snake_dqn.pth"):
-        print("❌ 학습된 모델이 없습니다. 먼저 train()을 실행하세요.")
-        return
-    env = SnakeEnv(render=False)
-    agent = DQNAgent()
-    agent.policy_net.load_state_dict(torch.load("snake_dqn.pth", map_location=agent.device))
-    agent.epsilon = 0.0  # Pure exploitation
+    env.quit()
     
-    print("🎮 Inference Mode - Press ESC to quit")
-    state = env.reset()
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                pygame.quit()
-                return
-        action = agent.act(state)
-        state, _, done, _ = env.step(action)
-        if done:
-            state = env.reset()
 
 def play():
     if not os.path.exists("snake_dqn.pth"):
@@ -224,18 +213,19 @@ def play():
     agent.epsilon = 0.0  # Pure exploitation
     
     print("🎮 Inference Mode - Press ESC to quit")
-    done=False
     state = env.reset()
-    while True:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
-                pygame.quit()
-                return
-        action = agent.act(state)
-        state, _, done, _ = env.step(action)
-        if done:
-            state = env.reset()
-            break    
+    for ep in range(1, 50):    
+        while True:
+            #for event in pygame.event.get():
+            #    if event.type == pygame.QUIT or (event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE):
+            #        pygame.quit()
+            #        return
+            _action = agent.action(state)
+            state, _ , done, _ = env.step(_action)
+            if done:
+                state = env.reset()
+                break
+    env.quit()
 
 if __name__ == "__main__":
     #import sys
@@ -243,7 +233,7 @@ if __name__ == "__main__":
     #if len(sys.argv) > 1 else "train"
     mode = "train"
     if mode == "train":
-        train(epochs=1000)
+        train(epochs=500)
     elif mode == "play":
         play()
     else:
