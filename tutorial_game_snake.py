@@ -105,8 +105,7 @@ class SnakeGame(SnakeBase):
         ]
         
         # 벡터스타일 방향 표시 절대방향 4개 (dx,dy)
-        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3  
-        
+        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3          
         self.direction = 1 # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
         self.dir_idx = 1 # 0:UP, 1:RIGHT, 2:DOWN, 3:LEFT
         self.change_to = self.direction
