@@ -1,4 +1,4 @@
-import pygame
+#import pygame
 import random
 import numpy as np
 import torch
@@ -7,10 +7,11 @@ import torch.optim as optim
 from collections import deque
 import os
 
+
 from tutorial_game_snake import SnakeGame
 
 # ─── CONFIG ──────────────────────────────────────────────────────────────────────
-
+#torch.set_default_device('cuda')
 ACTION_SPACE = 3  # 0: 직진, 1: 우회전, 2: 좌회전
 STATE_SIZE = 11   # [위험3, 방향4, 먹이방향4]
 
@@ -108,23 +109,28 @@ class DQN(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-class DQNAgent:
+
+
+class DQNAgent1:
     def __init__(self,_policydict=None):
+        
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         
-        self.policy_net = DQN(STATE_SIZE, ACTION_SPACE)#.to(self.device)  # t실제 사용되는 신경망
+        self.policy_net = DQN(STATE_SIZE, ACTION_SPACE) # t실제 사용되는 신경망
         #if _policydict !=None:            
         #    self.policy_net.load_state_dict(_policydict)
-        self.target_net = DQN(STATE_SIZE, ACTION_SPACE)#.to(self.device)
+        self.target_net = DQN(STATE_SIZE, ACTION_SPACE)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-3)
         self.memory = deque(maxlen=20000)
         self.gamma = 0.95
+        
         self.epsilon = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.996
-        self.batch_size = 64
-
+        self.epsilon_decay = 0.996 
+        
+        self.batch_size = 50
+        
     def remember(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
 
@@ -132,7 +138,7 @@ class DQNAgent:
         if np.random.rand() <= self.epsilon:
             return random.randrange(ACTION_SPACE)
         
-        state_t = torch.FloatTensor(state).unsqueeze(0)# .to(self.device)
+        state_t = torch.FloatTensor(state).unsqueeze(0)
         
         with torch.no_grad():
             return torch.argmax(self.policy_net(state_t), dim=1).item()
@@ -151,11 +157,11 @@ class DQNAgent:
             torch.tensor(np.array(next_states), dtype=torch.float32),
             torch.tensor(np.array(dones), dtype=torch.float32).unsqueeze(1)
         """
-        s_t = torch.FloatTensor(states)#.to(self.device)
-        ns_t = torch.FloatTensor(next_states)#.to(self.device)
-        a_t = torch.LongTensor(actions).unsqueeze(1)#.to(self.device)
-        r_t = torch.FloatTensor(rewards).unsqueeze(1)#.to(self.device)
-        d_t = torch.FloatTensor(dones).unsqueeze(1)#.to(self.device)
+        s_t = torch.FloatTensor(states)
+        ns_t = torch.FloatTensor(next_states)
+        a_t = torch.LongTensor(actions).unsqueeze(1)
+        r_t = torch.FloatTensor(rewards).unsqueeze(1)
+        d_t = torch.FloatTensor(dones).unsqueeze(1)
 
         curr_q = self.policy_net(s_t).gather(1, a_t)
         next_q = self.target_net(ns_t).max(1, keepdim=True)[0]
@@ -172,6 +178,67 @@ class DQNAgent:
     def update_target(self):
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
+class DQNAgent: # first make random than , make policy
+    def __init__(self,_policydict=None):       
+        self.policy_net = DQN(STATE_SIZE, ACTION_SPACE) # t실제 사용되는 신경망
+        self.target_net = DQN(STATE_SIZE, ACTION_SPACE)
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+        self.optimizer = optim.Adam(self.policy_net.parameters(), lr=1e-3)
+        self.memory = deque(maxlen=20000)
+        self.gamma = 0.95
+        
+        self.rand_count=0
+        
+        self.batch_size = 50
+        
+    def remember(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
+
+    def action(self, state):
+        if self.rand_count <= self.batch_size*500:
+            return random.randrange(ACTION_SPACE)
+        
+        state_t = torch.FloatTensor(state).unsqueeze(0)
+        
+        with torch.no_grad():
+            return torch.argmax(self.policy_net(state_t), dim=1).item()
+
+    def learn(self): # learn
+        if len(self.memory) < self.batch_size: 
+            return
+        batch = random.sample(self.memory, self.batch_size)
+        states, actions, rewards, next_states, dones = map(np.array, zip(*batch))
+        #states, actions, rewards, next_states, dones = self.memory.sample(self.batch_size)
+        #states, actions, rewards, next_states, dones = zip(*batch)
+        """  
+            torch.tensor(np.array(states), dtype=torch.float32),
+            torch.tensor(np.array(actions), dtype=torch.long).unsqueeze(1),
+            torch.tensor(np.array(rewards), dtype=torch.float32).unsqueeze(1),
+            torch.tensor(np.array(next_states), dtype=torch.float32),
+            torch.tensor(np.array(dones), dtype=torch.float32).unsqueeze(1)
+        """
+        s_t = torch.FloatTensor(states)
+        ns_t = torch.FloatTensor(next_states)
+        a_t = torch.LongTensor(actions).unsqueeze(1)
+        r_t = torch.FloatTensor(rewards).unsqueeze(1)
+        d_t = torch.FloatTensor(dones).unsqueeze(1)
+
+        curr_q = self.policy_net(s_t).gather(1, a_t)
+        next_q = self.target_net(ns_t).max(1, keepdim=True)[0]
+        target_q = r_t + self.gamma * next_q * (1 - d_t)
+
+        loss = nn.MSELoss()(curr_q, target_q)
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
+
+        #if self.epsilon > self.epsilon_min:
+        #    self.epsilon_m = self.epsilon_decay
+
+    def update_target(self):
+        self.target_net.load_state_dict(self.policy_net.state_dict())
+
+
 # ─── TRAINING & INFERENCE ───────────────────────────────────────────────────────
 def train(epochs=1000, target_update=300):
     
@@ -184,7 +251,7 @@ def train(epochs=1000, target_update=300):
     
     
     scores = []    
-    print(f"🚀 Training started on {agent.device}")
+    #print(f"🚀 Training started on {agent.device}")
     for ep in range(1, epochs + 1):
         state = env.reset() 
         env.reward = 0
@@ -193,7 +260,8 @@ def train(epochs=1000, target_update=300):
             _action = agent.action(state)
             next_state, reward, done, score = env.step(_action)
             agent.remember(state, _action, reward, next_state, done)            
-            state = next_state    
+            state = next_state   
+            agent.rand_count+=1            
             if done: 
                 break
             
@@ -201,9 +269,9 @@ def train(epochs=1000, target_update=300):
         scores.append(score)
         if ep % target_update == 0:
             agent.update_target()
-        if ep % 30 == 0:
+        if ep % 50 == 0:
             avg = np.mean(scores[-50:])
-            print(f"Ep {ep:4d} | Eps: {agent.epsilon:.3f} | Avg50: {avg:.2f}", agent.epsilon)
+            print(f"Ep {ep:4d} | Eps: 0 | Avg50: {avg:.2f}", agent.rand_count)
             if avg > 28 :
                 break
             
