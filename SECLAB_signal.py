@@ -9,9 +9,11 @@ Created on Sat Apr 24 17:01:29 2020
     d. analytic concept
     e. typo (2024/02/16)
     
+1.2 : change wvt to waveview
+    
 * 설명:  
-  - signal 처리에 필요한 base함수들, WVT 기능 구현에 중점을 두고 작성  
-  - wvt_periodgram: 
+  - signal 처리에 필요한 base함수들, waveview 기능 구현에 중점을 두고 작성  
+  - waveview_periodgram: 
   - make_tone: 사인파형태의 톤신호 생성함수
   - make_gaussian_pulse: 책에 나온 가우시안 펄스(?) 생성함수
 
@@ -19,6 +21,7 @@ TODO:
   * resampler 
     
 """
+
 import numpy as np
 from scipy import signal
 import matplotlib.pyplot as plt 
@@ -61,13 +64,13 @@ def getSamples(path,_count=1000,_type=">i2"):
     return norm_samples
 
     
-def wvt_filter(_samps,factor): # (60%,hyun)
+def waveview_filter(_samps,factor): # (60%,hyun)
     """
-    - wvt내부에서 사용하는 filter 흉내내기 
+    - waveview내부에서 사용하는 filter 흉내내기 
     - 목적은 90%만 살리고 나머지 높은 고주파수 부분 죽여버림
-    - wvt에서는 kiser를 사용했음
+    - waveview에서는 kiser를 사용했음
     - low pass filter with Kaiser, beta, attenuation (60db) 
-    - wvt: /dew/ui/display/psd/alg/Upsample.java: 
+    - waveview: /dew/ui/display/psd/alg/Upsample.java: 
     - 실습 필요!!!    
     """
     maxPassBandFreq= 0.4*2 # 복소수신호에 대해서!
@@ -91,16 +94,17 @@ def periodgram(_samps,n=1024):
     #abs_fft=np.abs(log_fft)
     return log_fft
 
-from scipy import signal
-def wvt_periodgram(samps,fs,fft_size=1024,_return_onesided=False):
+
+def waveview_periodgram(samps,fs,fft_size=1024,_return_onesided=False):
     """ 
-    WVT's power spectrum! 
-    ======================
+    waveview's power spectrum! 
+    ==========================
     
     * 작성자 : hyun
-    * 설명: 90% 성공. wvt의 파워스펙트럼 보여주기. 개발 중에 결과가 맞는지 파일저장 후 wvt로 확인해야할 경우가 있다. 
+    * 왜 periodgram 이라고 했는가????
+    * 설명: 90% 성공. waveview의 파워스펙트럼 보여주기. 개발 중에 결과가 맞는지 파일저장 후 waveview로 확인해야할 경우가 있다. 
      그럴때 좀 더 편하게 볼 수 있게 만든 함수.     
-     - wvt periodgram은 python periodgram과 같음 ???? , 아마도 matlab periodgram도 같을듯..    
+     - waveview periodgram은 python periodgram과 같음 ???? , 아마도 matlab periodgram도 같을듯..    
      - 입력 샘플이  real일 경우 절반만 리턴(default!)   <--- 맞나??? 
      - real or complex will works!
     
@@ -130,9 +134,9 @@ def wvt_periodgram(samps,fs,fft_size=1024,_return_onesided=False):
         #pass    
     return f,pxx
 
-def wvt_power(samps,samp_rate,power_n=2):
+def waveview_power(samps,samp_rate,power_n=2):
     """ 
-     WVT: power(n)
+     waveview: power(n)
      - 순서: analytic(hilbert) -->  filter(kizer) --->  resample(upsample)   --> power(n)
      - 구현 :97% 
      - 이해도: 90%
@@ -144,15 +148,15 @@ def wvt_power(samps,samp_rate,power_n=2):
     if power_n != 1 :
         #print("samps=",samps)
         samps=signal.hilbert(samps) # 90% if real than, convert to analytic
-        samps=wvt_filter(samps,power_n) # upsample 전 필터링, -0.45 ~ 0.45 만 살림
+        samps=waveview_filter(samps,power_n) # upsample 전 필터링, -0.45 ~ 0.45 만 살림
         samps=signal.resample(samps,len(samps)*power_n) # upsample
         samp_rate *= power_n # upsample결과 샘플레이트가 power_n만큼 커짐!
         samps=np.power(samps,power_n) # 99% ok !!
     return samps,samp_rate
-    #f,pxx=wvt_periodgram(samps,samp_rate,fft_size,half)
+    #f,pxx=waveview_periodgram(samps,samp_rate,fft_size,half)
     #return f,pxx
     
-def wvt_AM_DET(samps,samp_rate,fft_size=1024,half=True):
+def waveview_AM_DET(samps,samp_rate,fft_size=1024,half=True):
     """
     참고: 
      AM_DETECT()    
@@ -207,7 +211,7 @@ def get_angle_wns(samps):
     FM detect, Quadrature demod(GNURadio) 
     get angle with next sample
     목적: 현재 샘플과 다음 샘플과의 각(phasor)을 구하는 것
-     - wvt에서는 FM DETECT라고 하고 있다
+     - waveview에서는 FM DETECT라고 하고 있다
      - GNURadio에서는 quadrature demod라고 불림 
      - 복소수 각을 구하려면 나눗셈 또는 conj의 곱 사용(복소수곱특성)
     """
@@ -223,12 +227,12 @@ def get_angle_wns(samps):
     #    th=math.atan2(y,x)
     #    a.append(th)
     #return a
-def wvt_analytic(samps):
+def waveview_analytic(samps):
     return signal.hilbert(samps)
     
-def wvt_power2_FM(samps,samp_rate,half=True):
+def waveview_power2_FM(samps,samp_rate,half=True):
     """
-    WVT: power(2)(FM)  aka FM_DET 
+    waveview: power(2)(FM)  aka FM_DET 
     ------------------------------
     - 구현: 90% 
     - 이해도: 50% 
@@ -237,9 +241,9 @@ def wvt_power2_FM(samps,samp_rate,half=True):
     TODO: 
        - medianFilter 이해(90%) ----> median으로 변경 가능한가? ---> 힘듬 구간(세그먼트) 구분해야되서!!
        - medianFilter 는 중간값을 중심으로 잡아서 나머지 값들을 옮겨준다!!!
-       - wvt_power(2)
+       - waveview_power(2)
     """
-    samps= signal.hilbert(samps) # 95% # analytic # wvt_analytic(samps)    
+    samps= signal.hilbert(samps) # 95% # analytic # waveview_analytic(samps)    
     samps_real=get_angle_wns(samps) * samp_rate/(np.pi*2)  # 99%      
     samps_real=signal.medfilt(samps_real,7) # apply median 
     _m=samps_real.mean()  # 필요함!!
@@ -425,7 +429,7 @@ def test_triangle_wave():
     samps=make_tone(8e3,2e3,1) # 8k,2k, 0.1 sec    
     samps=make_exp1j(8e3,2e3,1) # 8k,2k, 0.1 sec
     
-    f,pxx = wvt_periodgram(samps,8e3)
+    f,pxx = waveview_periodgram(samps,8e3)
     plot_power(f,pxx,"exp1j, 2kHz")
     plt.plot(samps[0:10].real)
     plt.show()    
@@ -442,7 +446,7 @@ def test_resample_with_fft():
     #samps=make_exp1j(8e3,2e3,0.1) # 8k,2k, 0.1 sec
     samps=make_tone(8e3,2e3,0.1) # 8k,2k, 0.1 sec
     #samps=add_noise(samps)
-    f,pxx=wvt_periodgram(samps,8e3)
+    f,pxx=waveview_periodgram(samps,8e3)
     plot_power(f,pxx,"exp1j, 2kHz")
     plt.plot(samps[0:10])
     plt.show()   
@@ -456,10 +460,10 @@ def test_hilbert():
     """
     samp_rate=8e3
     samps=make_tone(samp_rate,2e3,1)
-    f,pxx=wvt_periodgram(samps,samp_rate,1024,False) # 
+    f,pxx=waveview_periodgram(samps,samp_rate,1024,False) # 
     plot_power(f,pxx,"without hilbert()")
     hilbert_chunk   = signal.hilbert(samps)
-    f,pxx=wvt_periodgram(hilbert_chunk,samp_rate,1024,False) # 
+    f,pxx=waveview_periodgram(hilbert_chunk,samp_rate,1024,False) # 
     plot_power(f,pxx,"with hilbert()")   
     '''
     if (1295.5 <= result and result < 1296.5):
@@ -496,7 +500,7 @@ def test_fft_shifting():
     #shift_fft_samps=np.fft.fftshift(fft_samps) # ifft할때는 shift할 필요없음!!!
     samps=np.fft.ifft(fft_samps)
     
-    f,pxx=wvt_periodgram(samps,8e3)
+    f,pxx=waveview_periodgram(samps,8e3)
     plot_power(f,pxx,"exp1j, 2kHz")
     ang=get_angle_wns(samps)            
     #print("angle=",ang)
@@ -519,12 +523,12 @@ def test_rotator():
     #samps=samps.astype(np.complex128)
     samps=signal.hilbert(samps)
     #samps=signal.resample(samps,len(samps)*2)
-    f,pxx=wvt_periodgram(samps,samp_rate,1024,False)
+    f,pxx=waveview_periodgram(samps,samp_rate,1024,False)
     abs_pxx=np.abs(pxx)
     plot_power(f,abs_pxx,'before rotator ')
     #print(samps)
     samps=rotator(samps,-90) # 
-    f,pxx=wvt_periodgram(samps,samp_rate,1024,False)
+    f,pxx=waveview_periodgram(samps,samp_rate,1024,False)
     abs_pxx=np.abs(pxx)
     plot_power(f,abs_pxx,'after rotator ')
     return
@@ -546,14 +550,14 @@ def test_cplx2real():
     debug = True
     _samps= _samps[831302: 831302 + 1024*8]
     if debug :
-        f,pxx=wvt_periodgram(_samps ,samp_rate,1024,False)
+        f,pxx=waveview_periodgram(_samps ,samp_rate,1024,False)
         abs_pxx=np.abs(pxx)
         plot_power(f,abs_pxx,'original')
       
     _samps=signal.resample(_samps,len(_samps)*2) # upsample 2배 --> complex128
     
     if debug:
-        f,pxx=wvt_periodgram(_samps,samp_rate*2,1024,False)
+        f,pxx=waveview_periodgram(_samps,samp_rate*2,1024,False)
         abs_pxx=np.abs(pxx)
         plot_power(f,abs_pxx,'resampling x2 ')
         print("dtype=",_samps.dtype)    
@@ -561,7 +565,7 @@ def test_cplx2real():
     _samps=rotator(_samps, 90) # 90도 rotate ==> 중심주파수 이동 (0hz ==> 양의주파수 samp_rate/2),
 
     if debug :
-        f,pxx=wvt_periodgram(_samps,samp_rate*2,1024,False)
+        f,pxx=waveview_periodgram(_samps,samp_rate*2,1024,False)
         abs_pxx=np.abs(pxx)
         plot_power(f,abs_pxx,'after rotator')
         print(" dtype=",_samps.dtype)
@@ -592,7 +596,7 @@ def test_fftfreq():
     _samps= _samps[0:1024]
     
     if debug :
-        f,pxx=wvt_periodgram(_samps ,samp_rate,1024,False)
+        f,pxx=waveview_periodgram(_samps ,samp_rate,1024,False)
         abs_pxx=np.abs(pxx)
         plot_power(f,abs_pxx,'original'+"(samprate= " +str(samp_rate) +"Hz)")
         
@@ -602,31 +606,52 @@ def test_fftfreq():
     _log_abs_fft=np.log10(_abs_fft)    
     plt.plot(_log_abs_fft)
 
-def test_wvt () :
+def test_waveview () :
     """
-    - WVT 주요기능을 그대로 구현 (hyun)
+    - waveview 주요기능을 그대로 구현 (hyun)
     """        
     import SECLAB_pcm
-    path="K-10191116H0005_G126Z_467.500_0130_0131_16t_160k.pcm.real.160k.16t"    
-    samps=SECLAB_pcm.loadPCM_16t(path,20000)/32700 #+0j
-    samp_rate=160e3    
-    #samps=samps[5000:9900]
-    samps=samps[5000:9000]
-    f,pxx=wvt_periodgram(samps,samp_rate,1024,True)
-    plot_power(f,pxx,'WVT power(periodgram): ')
+    #path="230.30Mhz.pcm.real.160k.16t"
+    path="/home/hyun/psk8_8k_16t.pcm" # samp 8k
+    #path="/home/hyun/works/QPSK/test.pcm"
+    samps=SECLAB_pcm.loadPCM_16t(path,8000*10)/32700 #+0j
+    #samps=SECLAB_pcm.loadPCM(path,dtype=np.int16,_count=8000*10)/32000 #+0j
     
-    _samps,tpm_samp_rate=wvt_power(samps,samp_rate,2)
-    f,pxx=wvt_periodgram(_samps,tpm_samp_rate,1024,True)
-    plot_power(f,pxx,'WVT power(periodgram): '+"power(2)")
+    samp_rate=8000
+    #samps=samps[5000:9900]
+    samps=samps[50:]
+    return_onesided = True
+    plot_time(samps[50:400],'waveview time: ')
+    
+    f,pxx=waveview_periodgram(samps,samp_rate,1024,return_onesided)
+    plot_power(f,pxx,'waveview power(periodgram): ')
+    
+    _samps,tpm_samp_rate=waveview_power(samps,samp_rate,2)
+    f,pxx=waveview_periodgram(_samps,tpm_samp_rate,1024*2,return_onesided)
+    plot_power(f,pxx,'waveview power(periodgram): '+"power(2)")
 
-    _samps=wvt_power2_FM(samps,samp_rate)
-    f,pxx=wvt_periodgram(_samps,samp_rate,1024,True)
-    plot_power(f,pxx,'WVT power2 FMDET')
+    _samps,tpm_samp_rate=waveview_power(samps,samp_rate,4)
+    f,pxx=waveview_periodgram(_samps,tpm_samp_rate,1024*2,return_onesided)
+    plot_power(f,pxx,'waveview power(periodgram): '+"power(4)")
+    
+    
+    _samps,tpm_samp_rate=waveview_power(samps,samp_rate,8)
+    f,pxx=waveview_periodgram(_samps,tpm_samp_rate,1024*2,return_onesided)
+    plot_power(f,pxx,'waveview power(periodgram): '+"power(8)")
 
-    _samps=wvt_AM_DET(samps,samp_rate)
-    f,pxx=wvt_periodgram(_samps,samp_rate,1024,True)
-    plot_power(f,pxx,'WVT AMDET')
-    #plot_power(y,'WVT AM DET') 
+    _samps=waveview_power2_FM(samps,samp_rate)
+    f,pxx=waveview_periodgram(_samps,samp_rate,1024,True)
+    plot_power(f,pxx,'waveview power2 FMDET')
+
+    _samps=waveview_AM_DET(samps,samp_rate)
+    f,pxx=waveview_periodgram(_samps,samp_rate,1024,True)
+    plot_power(f,pxx,'waveview AMDET')
+    #plot_power(y,'waveview AM DET') 
+    
+    f, t, Sxx = signal.spectrogram(samps, samp_rate)#, return_onesided=True)
+    plt.pcolormesh(t, f, Sxx, shading='gouraud')
+    plt.show()
+    
 
 def test_compare_periodgram(samps)     :
     """
@@ -659,7 +684,7 @@ def test_sine_wave():
     samps=make_tone(8e3,2e3,1) # 8k,2k, 1 sec
     samps=add_noise(samps)
     #samps=analytic_signal(samps)
-    f,pxx=wvt_periodgram(samps,8e3,1024,True)
+    f,pxx=waveview_periodgram(samps,8e3,1024,True)
     plot_power(f,pxx,"sin wave (real) 8k, 2000Hz with Noise")
 
     """ 사인파(complex) 생성 """
@@ -669,7 +694,7 @@ def test_sine_wave():
     #samps=signal.resample(samps,len(samps)*2)
     #samps=a+b
     samps=add_noise(samps)
-    f,pxx=wvt_periodgram(samps,8e3)
+    f,pxx=waveview_periodgram(samps,8e3)
     #plot_power(f,pxx,"exp1j, 2kHz")
     plot_power(f,pxx,"sine wave (cplx) 8k, 1k with noise") 
     
@@ -692,7 +717,8 @@ def test_bit2pulse():
 import sys
 #### __main__
 if __name__ == "__main__": 
-    test_bit2pulse()       
+    #test_bit2pulse()       
+    test_waveview()
     #test_triangle_wave()
     #test_cplx2real()
     #test_fftfreq()  # ?

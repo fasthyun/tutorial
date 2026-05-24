@@ -184,7 +184,7 @@ class DQNAgent1:
 
 class DQNAgent: 
     """
-        without epsilon!
+        without Epsilon!
         
         first make random than , make policy
         

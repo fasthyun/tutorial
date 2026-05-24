@@ -258,8 +258,7 @@ def load_and_preprocess_data(
     data_path: str,
     tokenizer,
     max_seq_length: int,
-    validation_split: float = 0.1
-):
+    validation_split: float = 0.1):
     """Load and preprocess the dataset."""
     
     dataset = TextDataset(data_path, tokenizer, max_seq_length)

@@ -4,7 +4,8 @@
 Created on Tue Apr  7 21:44:18 2026
 
 @author: hyun
-perfect works!!
+
+대략이해함(30%)
 
 
 ✅ 수정 필요 사항
