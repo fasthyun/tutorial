@@ -14,7 +14,7 @@ import pygame
 import random
 import sys
 
-# ─── CONFIGURATION ───────────────────────────────────────────────────────────────
+# ─── CONFIGURATION ──────────────────────────────────────────────────────────
 SCREEN_WIDTH, SCREEN_HEIGHT = 640*2, 480*2
 GRID_SIZE = 80
 GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
@@ -30,7 +30,7 @@ GRID_COLOR = (30, 30, 30)
 
 
 
-# ─── HELPER FUNCTIONS ────────────────────────────────────────────────────────────
+# ─── HELPER FUNCTIONS ───────────────────────────────────────────────────────
 
 class SnakeBase:
     def draw_grid(self):
@@ -53,7 +53,7 @@ class SnakeBase:
         self.screen.blit(text, (10, 10))
 
     def game_over_screen(self,score):
-        # ─── GAME OVER SCREEN ────────────────────────────────────────────────────────────
+        # ─── GAME OVER SCREEN ─────────────────────────────────────────────────────
         #self.screen.fill(BLACK)
         title = self.font.render("GAME OVER", True, (255, 50, 50))
         score_txt = self.font.render(f"Final Score: {score}", True, WHITE)
@@ -71,6 +71,20 @@ class SnakeGame(SnakeBase):
         pygame.init()
         self.clock = pygame.time.Clock()
         self.render_flag = render
+
+        # 모니터 해상도의 약 3/4 크기로 창을 만들고, 격자 단위에 맞춰 크기를 조정한다.
+        global SCREEN_WIDTH, SCREEN_HEIGHT, GRID_SIZE, GRID_WIDTH, GRID_HEIGHT
+        display_info = pygame.display.Info()
+        monitor_width = display_info.current_w or SCREEN_WIDTH
+        monitor_height = display_info.current_h or SCREEN_HEIGHT
+        target_width = int(monitor_width * 0.75)
+        target_height = int(monitor_height * 0.75)
+        GRID_SIZE = max(1, target_width // 16)
+        GRID_WIDTH = max(1, target_width // GRID_SIZE)
+        GRID_HEIGHT = max(1, target_height // GRID_SIZE)
+        SCREEN_WIDTH = GRID_WIDTH * GRID_SIZE
+        SCREEN_HEIGHT = GRID_HEIGHT * GRID_SIZE
+
         if render == True:
             pygame.display.set_caption("Classic Snake Game")        
             self.font = pygame.font.SysFont("consolas", 32)
@@ -94,7 +108,7 @@ class SnakeGame(SnakeBase):
     def state(self): # for ML_DQN
         return
         
-    # ─── MAIN GAME LOOP ──────────────────────────────────────────────────────────────
+    # ─── MAIN GAME LOOP ────────────────────────────────────────────────────────
     def game_init(self):
         # Initial snake state (length 3, moving right)
         self.head_pos = [ 5,  5]
@@ -243,7 +257,7 @@ class SnakeGame(SnakeBase):
             self.clock.tick(self.FPS) # delay? or sleep?               
         pygame.display.update()
         
-# ─── ENTRY POINT ─────────────────────────────────────────────────────────────────
+# ─── ENTRY POINT ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
     _game=SnakeGame()
     _game.game_init()
