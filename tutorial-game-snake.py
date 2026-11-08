@@ -17,12 +17,16 @@ import sys
 # Initialize pygame
 pygame.init()
 
-# ─── CONFIGURATION ───────────────────────────────────────────────────────────────
+# ─── CONFIGURATION ──────────────────────────────────────────────────────────
 WIDTH, HEIGHT = 640, 480
 GRID_SIZE = 20
 GRID_WIDTH = WIDTH // GRID_SIZE
 GRID_HEIGHT = HEIGHT // GRID_SIZE
 FPS = 12  # Controls game speed (classic snake feel)
+INITIAL_SNAKE_LENGTH = 3  # Change this value to choose the starting length
+
+if not 1 <= INITIAL_SNAKE_LENGTH <= GRID_WIDTH:
+    raise ValueError(f"INITIAL_SNAKE_LENGTH must be between 1 and {GRID_WIDTH}")
 
 # Colors
 BLACK = (0, 0, 0)
@@ -39,7 +43,7 @@ clock = pygame.time.Clock()
 font = pygame.font.SysFont("consolas", 32)
 small_font = pygame.font.SysFont("consolas", 24)
 
-# ─── HELPER FUNCTIONS ────────────────────────────────────────────────────────────
+# ─── HELPER FUNCTIONS ───────────────────────────────────────────────────────
 def draw_grid():
     for x in range(0, WIDTH, GRID_SIZE):
         pygame.draw.line(screen, GRID_COLOR, (x, 0), (x, HEIGHT))
@@ -67,7 +71,7 @@ def spawn_food(snake_body):
         if pos not in snake_body:
             return pos
 
-# ─── GAME OVER SCREEN ────────────────────────────────────────────────────────────
+# ─── GAME OVER SCREEN ───────────────────────────────────────────────────────
 def game_over_screen(score):
     screen.fill(BLACK)
     title = font.render("GAME OVER", True, (255, 50, 50))
@@ -91,14 +95,15 @@ def game_over_screen(score):
                 if event.key == pygame.K_r:
                     return  # Restart game loop
 
-# ─── MAIN GAME LOOP ──────────────────────────────────────────────────────────────
+# ─── MAIN GAME LOOP ─────────────────────────────────────────────────────────
 def game_loop():
-    # Initial snake state (length 3, moving right)
-    head_pos = [GRID_SIZE * 5, GRID_SIZE * 5]
+    # Create the starting snake from the configured length (moving right).
+    head_x = GRID_SIZE * (GRID_WIDTH // 2 + (INITIAL_SNAKE_LENGTH - 1) // 2)
+    head_y = GRID_SIZE * (GRID_HEIGHT // 2)
+    head_pos = [head_x, head_y]
     snake_body = [
-        list(head_pos),
-        [head_pos[0] - GRID_SIZE, head_pos[1]],
-        [head_pos[0] - 2 * GRID_SIZE, head_pos[1]]
+        [head_x - i * GRID_SIZE, head_y]
+        for i in range(INITIAL_SNAKE_LENGTH)
     ]
     
     direction = "RIGHT"
@@ -171,7 +176,7 @@ def game_loop():
 
         clock.tick(FPS)
 
-# ─── ENTRY POINT ─────────────────────────────────────────────────────────────────
+# ─── ENTRY POINT ──────────────────────────────────────────────────────────
 if __name__ == "__main__":
     while True:
         game_loop()
