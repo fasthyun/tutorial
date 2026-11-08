@@ -15,10 +15,10 @@ import random
 import sys
 
 # ─── CONFIGURATION ──────────────────────────────────────────────────────────
-SCREEN_WIDTH, SCREEN_HEIGHT = 640*2, 480*2
-GRID_SIZE = 80
-GRID_WIDTH = SCREEN_WIDTH // GRID_SIZE
-GRID_HEIGHT = SCREEN_HEIGHT // GRID_SIZE
+window_SCREEN_WIDTH, window_SCREEN_HEIGHT = 640, 480
+GRID_SIZE = 80 
+GRID_WIDTH = window_SCREEN_WIDTH // GRID_SIZE
+GRID_HEIGHT = window_SCREEN_HEIGHT // GRID_SIZE
 
 # Colors
 BLACK = (0, 0, 0)
@@ -28,16 +28,14 @@ SNAKE_HEAD_COLOR = (0, 255, 0)
 FOOD_COLOR = (255, 50, 50)
 GRID_COLOR = (30, 30, 30)
 
-
-
 # ─── HELPER FUNCTIONS ───────────────────────────────────────────────────────
 
 class SnakeBase:
     def draw_grid(self):
-        for x in range(0, SCREEN_WIDTH, GRID_SIZE):
-            pygame.draw.line(self.screen, GRID_COLOR, (x, 0), (x, SCREEN_HEIGHT))
-        for y in range(0, SCREEN_HEIGHT, GRID_SIZE):
-            pygame.draw.line(self.screen, GRID_COLOR, (0, y), (SCREEN_WIDTH, y))
+        for x in range(0, window_SCREEN_WIDTH, GRID_SIZE):
+            pygame.draw.line(self.screen, GRID_COLOR, (x, 0), (x, window_SCREEN_HEIGHT))
+        for y in range(0, window_SCREEN_HEIGHT, GRID_SIZE):
+            pygame.draw.line(self.screen, GRID_COLOR, (0, y), (window_SCREEN_WIDTH, y))
 
     def draw_snake(self,snake_body):
         for i, segment in enumerate(snake_body):
@@ -59,9 +57,9 @@ class SnakeBase:
         score_txt = self.font.render(f"Final Score: {score}", True, WHITE)
         prompt = self.small_font.render("Press [R] to Restart or [Q] to Quit", True, (150, 150, 150))
         
-        self.screen.blit(title, (SCREEN_WIDTH//2 - title.get_width()//2, SCREEN_HEIGHT//3))
-        self.screen.blit(score_txt, (SCREEN_WIDTH//2 - score_txt.get_width()//2, SCREEN_HEIGHT//2))
-        self.screen.blit(prompt, (SCREEN_WIDTH//2 - prompt.get_width()//2, SCREEN_HEIGHT//3 * 2))
+        self.screen.blit(title, (window_SCREEN_WIDTH//2 - title.get_width()//2, window_SCREEN_HEIGHT//3))
+        self.screen.blit(score_txt, (window_SCREEN_WIDTH//2 - score_txt.get_width()//2, window_SCREEN_HEIGHT//2))
+        self.screen.blit(prompt, (window_SCREEN_WIDTH//2 - prompt.get_width()//2, window_SCREEN_HEIGHT//3 * 2))
 
     
 class SnakeGame(SnakeBase):
@@ -73,23 +71,21 @@ class SnakeGame(SnakeBase):
         self.render_flag = render
 
         # 모니터 해상도의 약 3/4 크기로 창을 만들고, 격자 단위에 맞춰 크기를 조정한다.
-        global SCREEN_WIDTH, SCREEN_HEIGHT, GRID_SIZE, GRID_WIDTH, GRID_HEIGHT
+        global window_SCREEN_WIDTH, window_SCREEN_HEIGHT, GRID_SIZE, GRID_WIDTH, GRID_HEIGHT
         display_info = pygame.display.Info()
-        monitor_width = display_info.current_w or SCREEN_WIDTH
-        monitor_height = display_info.current_h or SCREEN_HEIGHT
+        monitor_width = display_info.current_w or window_SCREEN_WIDTH
+        monitor_height = display_info.current_h or window_SCREEN_HEIGHT
         target_width = int(monitor_width * 0.75)
         target_height = int(monitor_height * 0.75)
-        GRID_SIZE = max(1, target_width // 16)
-        GRID_WIDTH = max(1, target_width // GRID_SIZE)
-        GRID_HEIGHT = max(1, target_height // GRID_SIZE)
-        SCREEN_WIDTH = GRID_WIDTH * GRID_SIZE
-        SCREEN_HEIGHT = GRID_HEIGHT * GRID_SIZE
+        GRID_SIZE = max(1, target_width // 32)
+        GRID_WIDTH = GRID_HEIGHT = max(1, target_height // GRID_SIZE)        
+        window_SCREEN_WIDTH = window_SCREEN_HEIGHT = GRID_HEIGHT * GRID_SIZE
 
         if render == True:
             pygame.display.set_caption("Classic Snake Game")        
             self.font = pygame.font.SysFont("consolas", 32)
             self.small_font = pygame.font.SysFont("consolas", 24)                    
-            self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))                               
+            self.screen = pygame.display.set_mode((window_SCREEN_WIDTH, window_SCREEN_HEIGHT))                               
         
         self.game_init()
     

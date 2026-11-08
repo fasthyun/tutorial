@@ -19,12 +19,9 @@ STATE_SIZE = 11   # [위험3, 방향4, 먹이방향4]
 class SnakeEnv(SnakeGame):
     def __init__(self, render=True):
         SnakeGame.__init__(self,render)
-        self.steps = 0
-        #self.render_flag = render
-        #if self.render_flag:
-        #    pass
         #self.reset()
         #self.game_init()
+        self.steps = 0
         self.FPS=30
         self.reward = 0
         self.step_count_without_reward=0
@@ -34,7 +31,7 @@ class SnakeEnv(SnakeGame):
         self.steps =0 #!!!
         self.reward = 0
         self.game_init()
-        return self._get_state()
+        return self._get_state() # why?
 
     
     def _get_state(self): # 
@@ -57,9 +54,11 @@ class SnakeEnv(SnakeGame):
     
     
     def step(self, action):
+        """ called by agent """
         #head = self.head_pos 
         #self.dir_idx=self.direction #hmm
         # action: 0=straight, 1=right, 2=left
+        ##print("step.action =",action)
         if action == 1: 
             self.dir_idx = (self.dir_idx + 1) % 4
         elif action == 2: 
@@ -84,7 +83,7 @@ class SnakeEnv(SnakeGame):
             self.reward += 10 #
             self.step_count_without_reward=0
             self.score_prev = self.score
-            self.done = True
+            ####self.done = True
         
         if self.state == "GAME_OVER": # hit something!
             self.reward -= 10 # 
@@ -242,7 +241,7 @@ class DQNAgent:
 
 
 # ─── TRAINING & INFERENCE ───────────────────────────────────────────────────────
-def train(epochs=1000, target_update=300):
+def train(epochs=100, target_update=300):
     
     env = SnakeEnv(render=True)  # 학습 시 렌더링 OFF (속도 향상)
     
@@ -286,7 +285,7 @@ def play():
         return
     env = SnakeEnv(render=True)
     agent = DQNAgent1()
-    agent.policy_net.load_state_dict(torch.load(model))#, map_location=agent.device))
+    agent.policy_net.load_state_dict(torch.load(model,weights_only=True))#, map_location=agent.device))
     agent.epsilon = 0.0  # Pure exploitation
     
     print("🎮 Inference Mode - Press ESC to quit")
@@ -304,7 +303,7 @@ if __name__ == "__main__":
     
     mode = "train"
     if mode == "train":
-        train(epochs=5000)
+        train(epochs=1000)
     elif mode == "play":
         play()
     else:
