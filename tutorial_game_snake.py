@@ -19,6 +19,8 @@ window_SCREEN_WIDTH, window_SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 80 
 GRID_WIDTH = window_SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = window_SCREEN_HEIGHT // GRID_SIZE
+MIN_SNAKE_LENGTH = 10
+MAX_SNAKE_LENGTH = 30
 
 # Colors
 BLACK = (0, 0, 0)
@@ -106,7 +108,7 @@ class SnakeGame(SnakeBase):
         
     # ─── MAIN GAME LOOP ────────────────────────────────────────────────────────
     def game_init(self):
-        
+
         # A 10-by-8-cell loop has 32 positions, enough for a snake
         # of any random length from 10 to 30.
         loop_width, loop_height = 10, 8
@@ -289,3 +291,4 @@ if __name__ == "__main__":
         _game.autonomous()
         _game.process_game()
         _game.render()
+
