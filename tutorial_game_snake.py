@@ -19,6 +19,8 @@ window_SCREEN_WIDTH, window_SCREEN_HEIGHT = 640, 480
 GRID_SIZE = 80 
 GRID_WIDTH = window_SCREEN_WIDTH // GRID_SIZE
 GRID_HEIGHT = window_SCREEN_HEIGHT // GRID_SIZE
+MIN_SNAKE_LENGTH = 10
+MAX_SNAKE_LENGTH = 30
 
 # Colors
 BLACK = (0, 0, 0)
@@ -106,12 +108,17 @@ class SnakeGame(SnakeBase):
         
     # ─── MAIN GAME LOOP ────────────────────────────────────────────────────────
     def game_init(self):
-        # Initial snake state (length 3, moving right)
-        self.head_pos = [ 5,  5]
+        # Start with a random snake length from 10 to 30, moving right.
+        # Limit the length to the available grid width so the body fits on screen.
+        self.initial_snake_length = min(
+            random.randint(MIN_SNAKE_LENGTH, MAX_SNAKE_LENGTH), GRID_WIDTH
+        )
+        snake_y = GRID_HEIGHT // 2
+        snake_head_x = (GRID_WIDTH + self.initial_snake_length - 1) // 2
+        self.head_pos = [snake_head_x, snake_y]
         self.snake_body = [
-            list(self.head_pos),
-            [self.head_pos[0] , self.head_pos[1]],
-            [self.head_pos[0] - 2 , self.head_pos[1]] # length 3 
+            [snake_head_x - i, snake_y]
+            for i in range(self.initial_snake_length)
         ]
         
         # 벡터스타일 방향 표시 절대방향 4개 (dx,dy)
@@ -263,3 +270,4 @@ if __name__ == "__main__":
         _game.autonomous()
         _game.process_game()
         _game.render()
+
