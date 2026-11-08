@@ -243,7 +243,7 @@ class DQNAgent:
 # ─── TRAINING & INFERENCE ───────────────────────────────────────────────────────
 def train(epochs=100, target_update=300):
     
-    env = SnakeEnv(render=True)  # 학습 시 렌더링 OFF (속도 향상)
+    env = SnakeEnv(render=False)  # 학습 시 렌더링 OFF (속도 향상)
     
     #agent = DQNAgent(torch.load("snake_dqn.pth"))
     agent = DQNAgent()

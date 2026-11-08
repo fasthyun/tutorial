@@ -106,13 +106,39 @@ class SnakeGame(SnakeBase):
         
     # ─── MAIN GAME LOOP ────────────────────────────────────────────────────────
     def game_init(self):
-        # Initial snake state (length 3, moving right)
-        self.head_pos = [ 5,  5]
+        
+        # A 10-by-8-cell loop has 32 positions, enough for a snake
+        # of any random length from 10 to 30.
+        loop_width, loop_height = 10, 8
+        if GRID_WIDTH < loop_width or GRID_HEIGHT < loop_height:
+            raise ValueError("The grid must be at least 10 cells wide and 8 cells high.")
+        
+        left = (GRID_WIDTH - loop_width) // 2
+        top = (GRID_HEIGHT - loop_height) // 2
+        right = left + loop_width - 1
+        bottom = top + loop_height - 1
+        
+        # Clockwise path around the loop.
+        loop_path = (
+            [(x, top) for x in range(left, right + 1)]
+            + [(right, y) for y in range(top + 1, bottom + 1)]
+            + [(x, bottom) for x in range(right - 1, left - 1, -1)]
+            + [(left, y) for y in range(bottom - 1, top, -1)]
+        )
+        
+        self.initial_snake_length= 30
+        
+        # Head is at loop_path[0]; the body trails backward around the loop.
         self.snake_body = [
-            list(self.head_pos),
-            [self.head_pos[0] , self.head_pos[1]],
-            [self.head_pos[0] - 2 , self.head_pos[1]] # length 3 
+            list(loop_path[-i % len(loop_path)])
+            for i in range(self.initial_snake_length)
         ]
+        self.head_pos = self.snake_body[0][:]
+        
+        self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]
+        self.direction = 1  # Right, following the loop clockwise
+        self.dir_idx = 1
+        self.change_to = self.direction
         
         # 벡터스타일 방향 표시 절대방향 4개 (dx,dy)
         self.dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)]  # UP:0, RIGHT:1, DOWN:2, LEFT:3          
